@@ -60,7 +60,7 @@ const sampleTransactions = [
     },
 ];
 
-function TransactionsPage() {
+function TransactionsPage({ onAddTransaction }) {
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("all");
 
@@ -150,6 +150,7 @@ function TransactionsPage() {
                 type="button"
                 className="add-transaction-button"
                 aria-label="Add transaction"
+                onClick={onAddTransaction}
             >
                 +
             </button>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TransactionsPage from "./components/TransactionsPage";
+import AddTransactionPage from "./components/AddTransactionPage";
 import "./App.css";
 
 function App() {
@@ -21,10 +22,29 @@ function App() {
     setShowLogin(true);
   }
 
-  if (currentPage === "transactions") {
-    return <TransactionsPage />;
+    function handleSaveTransaction(transaction) {
+    // Temporary: the transaction API and the UI-to-API connection come later.
+    // For now, log the data and return to the Transactions page.
+    console.log("Transaction ready to save:", transaction);
+    setCurrentPage("transactions");
   }
 
+  if (currentPage === "transactions") {
+    return (
+      <TransactionsPage
+        onAddTransaction={() => setCurrentPage("add-transaction")}
+      />
+    );
+  }
+
+  if (currentPage === "add-transaction") {
+    return (
+      <AddTransactionPage
+        onSave={handleSaveTransaction}
+        onCancel={() => setCurrentPage("transactions")}
+      />
+    );
+  }
   return (
     <div className="auth-page">
       <div className="auth-container">
