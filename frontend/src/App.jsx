@@ -22,17 +22,47 @@ function App() {
     setShowLogin(true);
   }
 
-    function handleSaveTransaction(transaction) {
-    // Temporary: the transaction API and the UI-to-API connection come later.
-    // For now, log the data and return to the Transactions page.
-    console.log("Transaction ready to save:", transaction);
-    setCurrentPage("transactions");
+  async function handleSaveTransaction(transaction) {
+    try {
+      const response = await fetch("/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: 1,
+          categoryId: transaction.categoryId,
+          amount: transaction.amount,
+          currency: "CAD",
+          transactionDate: transaction.date,
+          transactionType:
+            transaction.type === "income" ? "Income" : "Expense",
+          description: transaction.description,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Could not save transaction."
+        );
+      }
+
+      console.log("Transaction saved:", data);
+      setCurrentPage("transactions");
+    } catch (error) {
+      console.error("Save transaction error:", error);
+      alert(error.message);
+    }
   }
 
   if (currentPage === "transactions") {
     return (
       <TransactionsPage
-        onAddTransaction={() => setCurrentPage("add-transaction")}
+        onAddTransaction={() =>
+          setCurrentPage("add-transaction")
+        }
       />
     );
   }
@@ -41,10 +71,13 @@ function App() {
     return (
       <AddTransactionPage
         onSave={handleSaveTransaction}
-        onCancel={() => setCurrentPage("transactions")}
+        onCancel={() =>
+          setCurrentPage("transactions")
+        }
       />
     );
   }
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -54,7 +87,9 @@ function App() {
         </div>
 
         <div className="auth-header">
-          <h1>{showLogin ? "Welcome Back" : "Create Account"}</h1>
+          <h1>
+            {showLogin ? "Welcome Back" : "Create Account"}
+          </h1>
 
           <p>
             {showLogin
@@ -64,9 +99,14 @@ function App() {
         </div>
 
         {showLogin ? (
-          <form className="auth-form" onSubmit={handleLogin}>
+          <form
+            className="auth-form"
+            onSubmit={handleLogin}
+          >
             <div className="form-group">
-              <label htmlFor="loginEmail">Email</label>
+              <label htmlFor="loginEmail">
+                Email
+              </label>
 
               <input
                 id="loginEmail"
@@ -77,7 +117,9 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="loginPassword">Password</label>
+              <label htmlFor="loginPassword">
+                Password
+              </label>
 
               <input
                 id="loginPassword"
@@ -87,11 +129,17 @@ function App() {
               />
             </div>
 
-            <button type="button" className="forgot-password">
+            <button
+              type="button"
+              className="forgot-password"
+            >
               Forgot Password?
             </button>
 
-            <button type="submit" className="auth-button">
+            <button
+              type="submit"
+              className="auth-button"
+            >
               Login
             </button>
 
@@ -100,16 +148,23 @@ function App() {
               <button
                 type="button"
                 className="switch-button"
-                onClick={() => setShowLogin(false)}
+                onClick={() =>
+                  setShowLogin(false)
+                }
               >
                 Register
               </button>
             </p>
           </form>
         ) : (
-          <form className="auth-form" onSubmit={handleRegister}>
+          <form
+            className="auth-form"
+            onSubmit={handleRegister}
+          >
             <div className="form-group">
-              <label htmlFor="name">Full Name</label>
+              <label htmlFor="name">
+                Full Name
+              </label>
 
               <input
                 id="name"
@@ -120,7 +175,9 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="registerEmail">Email</label>
+              <label htmlFor="registerEmail">
+                Email
+              </label>
 
               <input
                 id="registerEmail"
@@ -131,7 +188,9 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="registerPassword">Password</label>
+              <label htmlFor="registerPassword">
+                Password
+              </label>
 
               <input
                 id="registerPassword"
@@ -143,7 +202,9 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
+              <label htmlFor="confirmPassword">
+                Confirm Password
+              </label>
 
               <input
                 id="confirmPassword"
@@ -154,7 +215,10 @@ function App() {
               />
             </div>
 
-            <button type="submit" className="auth-button">
+            <button
+              type="submit"
+              className="auth-button"
+            >
               Register
             </button>
 
@@ -163,7 +227,9 @@ function App() {
               <button
                 type="button"
                 className="switch-button"
-                onClick={() => setShowLogin(true)}
+                onClick={() =>
+                  setShowLogin(true)
+                }
               >
                 Login
               </button>
