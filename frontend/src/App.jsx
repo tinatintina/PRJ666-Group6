@@ -2,6 +2,7 @@ import { useState } from "react";
 import TransactionsPage from "./components/TransactionsPage";
 import AddTransactionPage from "./components/AddTransactionPage";
 import BottomNav from "./components/BottomNav";
+import BudgetPage from "./components/BudgetPage";
 import "./App.css";
 
 function App() {
@@ -112,6 +113,19 @@ function App() {
             setCurrentPage("add-transaction")
           }
         />
+
+        <BottomNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+        />
+      </>
+    );
+  }
+
+  if (currentPage === "budget") {
+    return (
+      <>
+        <BudgetPage />
 
         <BottomNav
           currentPage={currentPage}
