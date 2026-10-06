@@ -1,5 +1,6 @@
 .add-transaction-page {
     min-height: 100vh;
+    padding-bottom: 95px;
     background: var(--color-background);
 }
 
@@ -154,4 +155,14 @@
     .add-transaction-card {
         padding: 22px 18px;
     }
+}
+
+.custom-category-input {
+    margin-top: 10px;
+}
+
+.category-error {
+    margin: 8px 0 0;
+    color: var(--color-expense);
+    font-size: 13px;
 }

@@ -23,7 +23,7 @@ function TransactionsPage({ onAddTransaction }) {
                 if (!response.ok) {
                     throw new Error(
                         data.message ||
-                            "Could not load transactions."
+                        "Could not load transactions."
                     );
                 }
 
@@ -88,7 +88,7 @@ function TransactionsPage({ onAddTransaction }) {
             const matchesFilter =
                 filter === "all" ||
                 transaction.transaction_type.toLowerCase() ===
-                    filter;
+                filter;
 
             return (
                 matchesSearch &&
@@ -155,7 +155,7 @@ function TransactionsPage({ onAddTransaction }) {
                                         type="button"
                                         className={
                                             filter ===
-                                            option
+                                                option
                                                 ? "active-filter"
                                                 : ""
                                         }
@@ -189,7 +189,7 @@ function TransactionsPage({ onAddTransaction }) {
                                 {error}
                             </p>
                         ) : filteredTransactions.length >
-                          0 ? (
+                            0 ? (
                             filteredTransactions.map(
                                 (
                                     transaction
@@ -209,7 +209,7 @@ function TransactionsPage({ onAddTransaction }) {
                                                 aria-hidden="true"
                                             >
                                                 {type ===
-                                                "income"
+                                                    "income"
                                                     ? "↓"
                                                     : "↑"}
                                             </div>
@@ -232,7 +232,7 @@ function TransactionsPage({ onAddTransaction }) {
                                                 className={`transaction-amount ${type}`}
                                             >
                                                 {type ===
-                                                "income"
+                                                    "income"
                                                     ? "+"
                                                     : "-"}
                                                 $
@@ -264,48 +264,6 @@ function TransactionsPage({ onAddTransaction }) {
                 +
             </button>
 
-            <nav
-                className="bottom-navigation"
-                aria-label="Main navigation"
-            >
-                <button type="button">
-                    <span aria-hidden="true">
-                        ⌂
-                    </span>
-                    Home
-                </button>
-
-                <button
-                    type="button"
-                    className="active-navigation"
-                >
-                    <span aria-hidden="true">
-                        ↕
-                    </span>
-                    Transactions
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">
-                        ▣
-                    </span>
-                    Budget
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">
-                        ▥
-                    </span>
-                    Reports
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">
-                        ●
-                    </span>
-                    Profile
-                </button>
-            </nav>
         </div>
     );
 }

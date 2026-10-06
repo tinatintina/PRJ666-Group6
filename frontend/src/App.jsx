@@ -1,6 +1,7 @@
 import { useState } from "react";
 import TransactionsPage from "./components/TransactionsPage";
 import AddTransactionPage from "./components/AddTransactionPage";
+import BottomNav from "./components/BottomNav";
 import "./App.css";
 
 function App() {
@@ -24,6 +25,41 @@ function App() {
 
   async function handleSaveTransaction(transaction) {
     try {
+      let categoryId = transaction.categoryId;
+
+      // Create a custom category when Other was selected.
+      if (transaction.customCategory) {
+        const categoryResponse = await fetch(
+          "/api/categories",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              categoryName: transaction.customCategory,
+              categoryType:
+                transaction.type === "income"
+                  ? "Income"
+                  : "Expense",
+            }),
+          }
+        );
+
+        const categoryData =
+          await categoryResponse.json();
+
+        if (!categoryResponse.ok) {
+          throw new Error(
+            categoryData.message ||
+            "Could not create category."
+          );
+        }
+
+        categoryId = categoryData.categoryId;
+      }
+
+      // Save the transaction using the selected or newly created category.
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: {
@@ -31,12 +67,14 @@ function App() {
         },
         body: JSON.stringify({
           userId: 1,
-          categoryId: transaction.categoryId,
+          categoryId,
           amount: transaction.amount,
           currency: "CAD",
           transactionDate: transaction.date,
           transactionType:
-            transaction.type === "income" ? "Income" : "Expense",
+            transaction.type === "income"
+              ? "Income"
+              : "Expense",
           description: transaction.description,
         }),
       });
@@ -57,24 +95,29 @@ function App() {
     }
   }
 
-  if (currentPage === "transactions") {
-    return (
-      <TransactionsPage
-        onAddTransaction={() =>
-          setCurrentPage("add-transaction")
-        }
-      />
-    );
-  }
-
   if (currentPage === "add-transaction") {
     return (
       <AddTransactionPage
         onSave={handleSaveTransaction}
-        onCancel={() =>
-          setCurrentPage("transactions")
-        }
+        onCancel={() => setCurrentPage("transactions")}
       />
+    );
+  }
+
+  if (currentPage === "transactions") {
+    return (
+      <>
+        <TransactionsPage
+          onAddTransaction={() =>
+            setCurrentPage("add-transaction")
+          }
+        />
+
+        <BottomNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+        />
+      </>
     );
   }
 
@@ -148,9 +191,7 @@ function App() {
               <button
                 type="button"
                 className="switch-button"
-                onClick={() =>
-                  setShowLogin(false)
-                }
+                onClick={() => setShowLogin(false)}
               >
                 Register
               </button>
@@ -227,9 +268,7 @@ function App() {
               <button
                 type="button"
                 className="switch-button"
-                onClick={() =>
-                  setShowLogin(true)
-                }
+                onClick={() => setShowLogin(true)}
               >
                 Login
               </button>
