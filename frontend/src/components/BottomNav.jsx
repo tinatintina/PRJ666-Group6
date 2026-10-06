@@ -13,7 +13,7 @@ function BottomNav({ currentPage, onNavigate }) {
 
     function handleNavigation(page) {
         // Transactions is the only available navbar page currently.
-        if (page === "transactions") {
+        if (page === "transactions" || page === "budget") {
             onNavigate(page);
         }
     }
