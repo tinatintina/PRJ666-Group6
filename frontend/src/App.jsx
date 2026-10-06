@@ -1,6 +1,8 @@
 import { useState } from "react";
 import TransactionsPage from "./components/TransactionsPage";
 import AddTransactionPage from "./components/AddTransactionPage";
+import CategoriesPage from "./components/CategoriesPage";
+import BottomNav from "./components/BottomNav";
 import "./App.css";
 
 function App() {
@@ -57,24 +59,39 @@ function App() {
     }
   }
 
-  if (currentPage === "transactions") {
+  if (currentPage !== "authentication") {
     return (
-      <TransactionsPage
-        onAddTransaction={() =>
-          setCurrentPage("add-transaction")
-        }
-      />
-    );
-  }
+      <>
+        {currentPage === "transactions" && (
+          <TransactionsPage
+            onAddTransaction={() =>
+              setCurrentPage("add-transaction")
+            }
+          />
+        )}
 
-  if (currentPage === "add-transaction") {
-    return (
-      <AddTransactionPage
-        onSave={handleSaveTransaction}
-        onCancel={() =>
-          setCurrentPage("transactions")
-        }
-      />
+        {currentPage === "categories" && (
+          <CategoriesPage />
+        )}
+
+        {currentPage === "add-transaction" && (
+          <AddTransactionPage
+            onSave={handleSaveTransaction}
+            onCancel={() =>
+              setCurrentPage("transactions")
+            }
+          />
+        )}
+
+        <BottomNav
+          currentPage={
+            currentPage === "add-transaction"
+              ? "transactions"
+              : currentPage
+          }
+          onNavigate={setCurrentPage}
+        />
+      </>
     );
   }
 
