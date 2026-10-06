@@ -1,16 +1,19 @@
 function BottomNav({ currentPage, onNavigate }) {
     const items = [
         { page: "home", icon: "⌂", label: "Home" },
-        { page: "transactions", icon: "↕", label: "Transactions" },
-        { page: "categories", icon: "▦", label: "Categories" },
+        {
+            page: "transactions",
+            icon: "↕",
+            label: "Transactions",
+        },
         { page: "budget", icon: "▣", label: "Budget" },
         { page: "reports", icon: "▥", label: "Reports" },
         { page: "profile", icon: "●", label: "Profile" },
     ];
 
     function handleNavigation(page) {
-        // Only these pages are currently available.
-        if (page === "transactions" || page === "categories") {
+        // Transactions is the only available navbar page currently.
+        if (page === "transactions") {
             onNavigate(page);
         }
     }
@@ -28,7 +31,10 @@ function BottomNav({ currentPage, onNavigate }) {
                     }
                     onClick={() => handleNavigation(item.page)}
                 >
-                    <span aria-hidden="true">{item.icon}</span>
+                    <span aria-hidden="true">
+                        {item.icon}
+                    </span>
+
                     {item.label}
                 </button>
             ))}

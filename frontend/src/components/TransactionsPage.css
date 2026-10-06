@@ -224,7 +224,7 @@
     left: 0;
     z-index: 1000;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     align-items: center;
     width: 100%;
     border-top: 1px solid var(--color-border);
