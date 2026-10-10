@@ -1,90 +1,122 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./TransactionsPage.css";
 
-const sampleTransactions = [
-    {
-        id: 1,
-        category: "Food & Dining",
-        date: "Jul 19",
-        amount: 12.5,
-        type: "expense",
-    },
-    {
-        id: 2,
-        category: "Transport",
-        date: "Jul 18",
-        amount: 4,
-        type: "expense",
-    },
-    {
-        id: 3,
-        category: "Part-time Job",
-        date: "Jul 17",
-        amount: 350,
-        type: "income",
-    },
-    {
-        id: 4,
-        category: "Utilities",
-        date: "Jul 16",
-        amount: 45,
-        type: "expense",
-    },
-    {
-        id: 5,
-        category: "Groceries",
-        date: "Jul 15",
-        amount: 38.2,
-        type: "expense",
-    },
-    {
-        id: 6,
-        category: "Tuition Fee",
-        date: "Jul 14",
-        amount: 500,
-        type: "expense",
-    },
-    {
-        id: 7,
-        category: "Scholarship",
-        date: "Jul 12",
-        amount: 800,
-        type: "income",
-    },
-    {
-        id: 8,
-        category: "Entertainment",
-        date: "Jul 12",
-        amount: 15,
-        type: "expense",
-    },
-];
-
 function TransactionsPage({ onAddTransaction }) {
+    const [transactions, setTransactions] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("all");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    const filteredTransactions = sampleTransactions.filter((transaction) => {
-        const matchesSearch = transaction.category
-            .toLowerCase()
-            .includes(search.toLowerCase());
+    useEffect(() => {
+        async function loadTransactions() {
+            try {
+                // Temporary user ID until login is fully connected
+                const userId = 1;
 
-        const matchesFilter =
-            filter === "all" || transaction.type === filter;
+                const response = await fetch(
+                    `/api/transactions/${userId}`
+                );
 
-        return matchesSearch && matchesFilter;
-    });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        "Could not load transactions."
+                    );
+                }
+
+                setTransactions(data.transactions);
+            } catch (error) {
+                console.error(
+                    "Transaction error:",
+                    error
+                );
+
+                setError(
+                    "Could not load transactions."
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadTransactions();
+    }, []);
+
+    function formatDate(dateValue) {
+        if (!dateValue) {
+            return "";
+        }
+
+        const dateOnly = dateValue.split("T")[0];
+        const [year, month, day] = dateOnly.split("-");
+
+        const date = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day)
+        );
+
+        return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+        });
+    }
+
+    const filteredTransactions = transactions.filter(
+        (transaction) => {
+            const category =
+                transaction.category_name || "";
+
+            const description =
+                transaction.description || "";
+
+            const matchesSearch =
+                category
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    ) ||
+                description
+                    .toLowerCase()
+                    .includes(
+                        search.toLowerCase()
+                    );
+
+            const matchesFilter =
+                filter === "all" ||
+                transaction.transaction_type.toLowerCase() ===
+                filter;
+
+            return (
+                matchesSearch &&
+                matchesFilter
+            );
+        }
+    );
 
     return (
         <div className="transactions-page">
             <header className="transactions-header">
                 <div>
-                    <p className="header-label">SMART SPEND</p>
+                    <p className="header-label">
+                        SMART SPEND
+                    </p>
+
                     <h1>Transactions</h1>
-                    <p>Review and manage your recent financial activity.</p>
+
+                    <p>
+                        Review and manage your
+                        recent financial activity.
+                    </p>
                 </div>
 
-                <button className="profile-button" aria-label="Open profile">
+                <button
+                    className="profile-button"
+                    aria-label="Open profile"
+                >
                     AD
                 </button>
             </header>
@@ -93,54 +125,131 @@ function TransactionsPage({ onAddTransaction }) {
                 <section className="transactions-card">
                     <div className="transactions-toolbar">
                         <div className="search-container">
-                            <span aria-hidden="true">⌕</span>
+                            <span aria-hidden="true">
+                                ⌕
+                            </span>
 
                             <input
                                 type="search"
                                 placeholder="Search transactions..."
                                 value={search}
-                                onChange={(event) => setSearch(event.target.value)}
+                                onChange={(event) =>
+                                    setSearch(
+                                        event.target.value
+                                    )
+                                }
                             />
                         </div>
 
                         <div className="filter-buttons">
-                            {["all", "income", "expense"].map((option) => (
-                                <button
-                                    key={option}
-                                    type="button"
-                                    className={filter === option ? "active-filter" : ""}
-                                    onClick={() => setFilter(option)}
-                                >
-                                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                                </button>
-                            ))}
+                            {[
+                                "all",
+                                "income",
+                                "expense",
+                            ].map(
+                                (option) => (
+                                    <button
+                                        key={
+                                            option
+                                        }
+                                        type="button"
+                                        className={
+                                            filter ===
+                                                option
+                                                ? "active-filter"
+                                                : ""
+                                        }
+                                        onClick={() =>
+                                            setFilter(
+                                                option
+                                            )
+                                        }
+                                    >
+                                        {option
+                                            .charAt(
+                                                0
+                                            )
+                                            .toUpperCase() +
+                                            option.slice(
+                                                1
+                                            )}
+                                    </button>
+                                )
+                            )}
                         </div>
                     </div>
 
                     <div className="transaction-list">
-                        {filteredTransactions.length > 0 ? (
-                            filteredTransactions.map((transaction) => (
-                                <article className="transaction-row" key={transaction.id}>
-                                    <div
-                                        className={`transaction-icon ${transaction.type}`}
-                                        aria-hidden="true"
-                                    >
-                                        {transaction.type === "income" ? "↓" : "↑"}
-                                    </div>
+                        {loading ? (
+                            <p className="empty-message">
+                                Loading transactions...
+                            </p>
+                        ) : error ? (
+                            <p className="empty-message">
+                                {error}
+                            </p>
+                        ) : filteredTransactions.length >
+                            0 ? (
+                            filteredTransactions.map(
+                                (
+                                    transaction
+                                ) => {
+                                    const type =
+                                        transaction.transaction_type.toLowerCase();
 
-                                    <div className="transaction-details">
-                                        <h2>{transaction.category}</h2>
-                                        <p>{transaction.date}</p>
-                                    </div>
+                                    return (
+                                        <article
+                                            className="transaction-row"
+                                            key={
+                                                transaction.transaction_id
+                                            }
+                                        >
+                                            <div
+                                                className={`transaction-icon ${type}`}
+                                                aria-hidden="true"
+                                            >
+                                                {type ===
+                                                    "income"
+                                                    ? "↓"
+                                                    : "↑"}
+                                            </div>
 
-                                    <p className={`transaction-amount ${transaction.type}`}>
-                                        {transaction.type === "income" ? "+" : "-"}$
-                                        {transaction.amount.toFixed(2)}
-                                    </p>
-                                </article>
-                            ))
+                                            <div className="transaction-details">
+                                                <h2>
+                                                    {
+                                                        transaction.category_name
+                                                    }
+                                                </h2>
+
+                                                <p>
+                                                    {formatDate(
+                                                        transaction.transaction_date
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                            <p
+                                                className={`transaction-amount ${type}`}
+                                            >
+                                                {type ===
+                                                    "income"
+                                                    ? "+"
+                                                    : "-"}
+                                                $
+                                                {Number(
+                                                    transaction.amount
+                                                ).toFixed(
+                                                    2
+                                                )}
+                                            </p>
+                                        </article>
+                                    );
+                                }
+                            )
                         ) : (
-                            <p className="empty-message">No transactions found.</p>
+                            <p className="empty-message">
+                                No transactions found.
+                            </p>
                         )}
                     </div>
                 </section>
@@ -155,32 +264,6 @@ function TransactionsPage({ onAddTransaction }) {
                 +
             </button>
 
-            <nav className="bottom-navigation" aria-label="Main navigation">
-                <button type="button">
-                    <span aria-hidden="true">⌂</span>
-                    Home
-                </button>
-
-                <button type="button" className="active-navigation">
-                    <span aria-hidden="true">↕</span>
-                    Transactions
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">▣</span>
-                    Budget
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">▥</span>
-                    Reports
-                </button>
-
-                <button type="button">
-                    <span aria-hidden="true">●</span>
-                    Profile
-                </button>
-            </nav>
         </div>
     );
 }

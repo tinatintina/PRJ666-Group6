@@ -1,10 +1,9 @@
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 
-const login = (req, res) => {
+// LOGIN
+const login = async (req, res) => {
     const { email, password } = req.body;
-
-    console.log("Login request received:", email);
 
     if (!email || !password) {
         return res.status(400).json({
@@ -13,16 +12,74 @@ const login = (req, res) => {
         });
     }
 
-    return res.status(200).json({
-        success: true,
-        message: "Login API is working"
-    });
+    try {
+        const [users] = await pool.query(
+            "SELECT * FROM users WHERE email = ?",
+            [email]
+        );
+
+        if (users.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        const user = users[0];
+
+        const passwordMatches = await bcrypt.compare(
+            password,
+            user.password_hash
+        );
+
+        if (!passwordMatches) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Login successful.",
+            user: {
+                userId: user.user_id,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                email: user.email,
+                preferredCurrency: user.preferred_currency
+            }
+        });
+
+    } catch (err) {
+        console.error("Login error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error during login."
+        });
+    }
 };
 
-const register = async (req, res) => {
-    const { firstName, lastName, email, password, confirmPassword, preferredCurrency } = req.body;
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+// REGISTER
+const register = async (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+        preferredCurrency
+    } = req.body;
+
+    if (
+        !firstName ||
+        !lastName ||
+        !email ||
+        !password ||
+        !confirmPassword
+    ) {
         return res.status(400).json({
             success: false,
             message: "All fields are required."
@@ -58,25 +115,35 @@ const register = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 10);
 
-        await pool.query(
-            `INSERT INTO users (first_name, last_name, email, password_hash, preferred_currency)
-             VALUES (?, ?, ?, ?, ?)`,
-            [firstName, lastName, email, passwordHash, preferredCurrency || "CAD"]
+        const [result] = await pool.query(
+            `INSERT INTO users
+            (first_name, last_name, email, password_hash, preferred_currency)
+            VALUES (?, ?, ?, ?, ?)`,
+            [
+                firstName,
+                lastName,
+                email,
+                passwordHash,
+                preferredCurrency || "CAD"
+            ]
         );
 
         return res.status(201).json({
             success: true,
-            message: "Account created successfully."
+            message: "Account created successfully.",
+            userId: result.insertId
         });
 
     } catch (err) {
         console.error("Registration error:", err);
+
         return res.status(500).json({
             success: false,
             message: "Server error during registration."
         });
     }
 };
+
 
 module.exports = {
     login,
