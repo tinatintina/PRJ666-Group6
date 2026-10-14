@@ -13,8 +13,11 @@ CREATE TABLE users (
 
 CREATE TABLE categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(50) NOT NULL,
-    category_type VARCHAR(20) NOT NULL
+    category_name VARCHAR(100) NOT NULL,
+    category_type VARCHAR(20) NOT NULL,
+    user_id INT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
 CREATE TABLE transactions (

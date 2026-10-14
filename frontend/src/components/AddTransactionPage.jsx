@@ -4,56 +4,116 @@ import "./AddTransactionPage.css";
 // Local date as YYYY-MM-DD
 function getTodayString() {
     const now = new Date();
-    const offsetMs = now.getTimezoneOffset() * 60000;
+    const offsetMs =
+        now.getTimezoneOffset() * 60000;
 
-    return new Date(now.getTime() - offsetMs)
+    return new Date(
+        now.getTime() - offsetMs
+    )
         .toISOString()
         .slice(0, 10);
 }
 
-function AddTransactionPage({ onSave, onCancel }) {
-    const [type, setType] = useState("expense");
-    const [amount, setAmount] = useState("");
-    const [categoryId, setCategoryId] = useState("");
-    const [customCategory, setCustomCategory] = useState("");
-    const [description, setDescription] = useState("");
-    const [date, setDate] = useState(getTodayString());
+function AddTransactionPage({
+    userId,
+    onSave,
+    onCancel,
+}) {
+    const [type, setType] =
+        useState("expense");
 
-    const [categories, setCategories] = useState([]);
-    const [loadingCategories, setLoadingCategories] =
-        useState(true);
-    const [categoryError, setCategoryError] = useState("");
+    const [amount, setAmount] =
+        useState("");
 
-    // Load categories from backend
+    const [categoryId, setCategoryId] =
+        useState("");
+
+    const [
+        customCategory,
+        setCustomCategory,
+    ] = useState("");
+
+    const [
+        description,
+        setDescription,
+    ] = useState("");
+
+    const [date, setDate] =
+        useState(getTodayString());
+
+    const [
+        categories,
+        setCategories,
+    ] = useState([]);
+
+    const [
+        loadingCategories,
+        setLoadingCategories,
+    ] = useState(true);
+
+    const [
+        categoryError,
+        setCategoryError,
+    ] = useState("");
+
+    // Load default categories and custom
+    // categories for the logged-in user
     useEffect(() => {
         async function loadCategories() {
             try {
-                const response = await fetch("/api/categories");
-                const data = await response.json();
+                setLoadingCategories(true);
+                setCategoryError("");
+
+                const response = await fetch(
+                    `/api/categories?userId=${userId}`
+                );
+
+                const data =
+                    await response.json();
 
                 if (!response.ok) {
                     throw new Error(
-                        data.message || "Could not load categories."
+                        data.message ||
+                            "Could not load categories."
                     );
                 }
 
-                setCategories(data.categories);
+                setCategories(
+                    data.categories
+                );
             } catch (error) {
-                console.error("Category error:", error);
-                setCategoryError("Could not load categories.");
+                console.error(
+                    "Category error:",
+                    error
+                );
+
+                setCategoryError(
+                    "Could not load categories."
+                );
             } finally {
                 setLoadingCategories(false);
             }
         }
 
-        loadCategories();
-    }, []);
+        if (userId) {
+            loadCategories();
+        } else {
+            setCategoryError(
+                "No logged-in user found."
+            );
 
-    // Only show categories that match Income or Expense
-    const availableCategories = categories.filter(
-        (category) =>
-            category.category_type.toLowerCase() === type
-    );
+            setLoadingCategories(false);
+        }
+    }, [userId]);
+
+    // Only show categories that match
+    // the selected transaction type
+    const availableCategories =
+        categories.filter(
+            (category) =>
+                category.category_type.toLowerCase() ===
+                type
+        );
 
     function handleTypeChange(newType) {
         setType(newType);
@@ -62,11 +122,16 @@ function AddTransactionPage({ onSave, onCancel }) {
     }
 
     function handleCategoryChange(event) {
-        const selectedCategory = event.target.value;
+        const selectedCategory =
+            event.target.value;
 
-        setCategoryId(selectedCategory);
+        setCategoryId(
+            selectedCategory
+        );
 
-        if (selectedCategory !== "other") {
+        if (
+            selectedCategory !== "other"
+        ) {
             setCustomCategory("");
         }
     }
@@ -77,15 +142,20 @@ function AddTransactionPage({ onSave, onCancel }) {
         onSave({
             type,
             amount: Number(amount),
+
             categoryId:
                 categoryId === "other"
                     ? null
                     : Number(categoryId),
+
             customCategory:
                 categoryId === "other"
                     ? customCategory.trim()
                     : "",
-            description: description.trim(),
+
+            description:
+                description.trim(),
+
             date,
         });
     }
@@ -101,7 +171,9 @@ function AddTransactionPage({ onSave, onCancel }) {
                     ← Back
                 </button>
 
-                <h1>Add Transaction</h1>
+                <h1>
+                    Add Transaction
+                </h1>
             </header>
 
             <main className="add-transaction-content">
@@ -122,24 +194,43 @@ function AddTransactionPage({ onSave, onCancel }) {
                             role="group"
                             aria-labelledby="typeLabel"
                         >
-                            {["expense", "income"].map((option) => (
-                                <button
-                                    key={option}
-                                    type="button"
-                                    className={
-                                        type === option
-                                            ? "active-type"
-                                            : ""
-                                    }
-                                    aria-pressed={type === option}
-                                    onClick={() =>
-                                        handleTypeChange(option)
-                                    }
-                                >
-                                    {option.charAt(0).toUpperCase() +
-                                        option.slice(1)}
-                                </button>
-                            ))}
+                            {[
+                                "expense",
+                                "income",
+                            ].map(
+                                (option) => (
+                                    <button
+                                        key={
+                                            option
+                                        }
+                                        type="button"
+                                        className={
+                                            type ===
+                                            option
+                                                ? "active-type"
+                                                : ""
+                                        }
+                                        aria-pressed={
+                                            type ===
+                                            option
+                                        }
+                                        onClick={() =>
+                                            handleTypeChange(
+                                                option
+                                            )
+                                        }
+                                    >
+                                        {option
+                                            .charAt(
+                                                0
+                                            )
+                                            .toUpperCase() +
+                                            option.slice(
+                                                1
+                                            )}
+                                    </button>
+                                )
+                            )}
                         </div>
                     </div>
 
@@ -157,8 +248,13 @@ function AddTransactionPage({ onSave, onCancel }) {
                             max="99999999.99"
                             step="0.01"
                             value={amount}
-                            onChange={(event) =>
-                                setAmount(event.target.value)
+                            onChange={(
+                                event
+                            ) =>
+                                setAmount(
+                                    event.target
+                                        .value
+                                )
                             }
                             required
                         />
@@ -172,8 +268,12 @@ function AddTransactionPage({ onSave, onCancel }) {
                         <select
                             id="category"
                             value={categoryId}
-                            onChange={handleCategoryChange}
-                            disabled={loadingCategories}
+                            onChange={
+                                handleCategoryChange
+                            }
+                            disabled={
+                                loadingCategories
+                            }
                             required
                         >
                             <option value="">
@@ -182,14 +282,22 @@ function AddTransactionPage({ onSave, onCancel }) {
                                     : "Select category..."}
                             </option>
 
-                            {availableCategories.map((category) => (
-                                <option
-                                    key={category.category_id}
-                                    value={category.category_id}
-                                >
-                                    {category.category_name}
-                                </option>
-                            ))}
+                            {availableCategories.map(
+                                (category) => (
+                                    <option
+                                        key={
+                                            category.category_id
+                                        }
+                                        value={
+                                            category.category_id
+                                        }
+                                    >
+                                        {
+                                            category.category_name
+                                        }
+                                    </option>
+                                )
+                            )}
 
                             {!loadingCategories && (
                                 <option value="other">
@@ -198,14 +306,23 @@ function AddTransactionPage({ onSave, onCancel }) {
                             )}
                         </select>
 
-                        {categoryId === "other" && (
+                        {categoryId ===
+                            "other" && (
                             <input
                                 id="customCategory"
                                 className="custom-category-input"
                                 type="text"
-                                value={customCategory}
-                                onChange={(event) =>
-                                    setCustomCategory(event.target.value)
+                                value={
+                                    customCategory
+                                }
+                                onChange={(
+                                    event
+                                ) =>
+                                    setCustomCategory(
+                                        event
+                                            .target
+                                            .value
+                                    )
                                 }
                                 placeholder="Enter your category"
                                 maxLength="100"
@@ -215,14 +332,17 @@ function AddTransactionPage({ onSave, onCancel }) {
 
                         {categoryError && (
                             <p className="category-error">
-                                {categoryError}
+                                {
+                                    categoryError
+                                }
                             </p>
                         )}
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="description">
-                            Description (optional)
+                            Description
+                            (optional)
                         </label>
 
                         <input
@@ -230,9 +350,16 @@ function AddTransactionPage({ onSave, onCancel }) {
                             type="text"
                             placeholder="e.g. Groceries at No Frills"
                             maxLength="255"
-                            value={description}
-                            onChange={(event) =>
-                                setDescription(event.target.value)
+                            value={
+                                description
+                            }
+                            onChange={(
+                                event
+                            ) =>
+                                setDescription(
+                                    event.target
+                                        .value
+                                )
                             }
                         />
                     </div>
@@ -246,8 +373,13 @@ function AddTransactionPage({ onSave, onCancel }) {
                             id="date"
                             type="date"
                             value={date}
-                            onChange={(event) =>
-                                setDate(event.target.value)
+                            onChange={(
+                                event
+                            ) =>
+                                setDate(
+                                    event.target
+                                        .value
+                                )
                             }
                             required
                         />
@@ -264,7 +396,9 @@ function AddTransactionPage({ onSave, onCancel }) {
                         <button
                             type="button"
                             className="cancel-button"
-                            onClick={onCancel}
+                            onClick={
+                                onCancel
+                            }
                         >
                             Cancel
                         </button>

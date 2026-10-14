@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import "./TransactionsPage.css";
 
-function TransactionsPage({ onAddTransaction }) {
-    const [transactions, setTransactions] = useState([]);
+function TransactionsPage({
+    userId,
+    onAddTransaction,
+}) {
+    const [transactions, setTransactions] =
+        useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("all");
     const [loading, setLoading] = useState(true);
@@ -10,10 +14,15 @@ function TransactionsPage({ onAddTransaction }) {
 
     useEffect(() => {
         async function loadTransactions() {
-            try {
-                // Temporary user ID until login is fully connected
-                const userId = 1;
+            if (!userId) {
+                setError(
+                    "No logged-in user found."
+                );
+                setLoading(false);
+                return;
+            }
 
+            try {
                 const response = await fetch(
                     `/api/transactions/${userId}`
                 );
@@ -23,11 +32,13 @@ function TransactionsPage({ onAddTransaction }) {
                 if (!response.ok) {
                     throw new Error(
                         data.message ||
-                        "Could not load transactions."
+                            "Could not load transactions."
                     );
                 }
 
-                setTransactions(data.transactions);
+                setTransactions(
+                    data.transactions
+                );
             } catch (error) {
                 console.error(
                     "Transaction error:",
@@ -43,15 +54,18 @@ function TransactionsPage({ onAddTransaction }) {
         }
 
         loadTransactions();
-    }, []);
+    }, [userId]);
 
     function formatDate(dateValue) {
         if (!dateValue) {
             return "";
         }
 
-        const dateOnly = dateValue.split("T")[0];
-        const [year, month, day] = dateOnly.split("-");
+        const dateOnly =
+            dateValue.split("T")[0];
+
+        const [year, month, day] =
+            dateOnly.split("-");
 
         const date = new Date(
             Number(year),
@@ -59,43 +73,48 @@ function TransactionsPage({ onAddTransaction }) {
             Number(day)
         );
 
-        return date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-        });
+        return date.toLocaleDateString(
+            "en-US",
+            {
+                month: "short",
+                day: "numeric",
+            }
+        );
     }
 
-    const filteredTransactions = transactions.filter(
-        (transaction) => {
-            const category =
-                transaction.category_name || "";
+    const filteredTransactions =
+        transactions.filter(
+            (transaction) => {
+                const category =
+                    transaction.category_name ||
+                    "";
 
-            const description =
-                transaction.description || "";
+                const description =
+                    transaction.description || "";
 
-            const matchesSearch =
-                category
-                    .toLowerCase()
-                    .includes(
-                        search.toLowerCase()
-                    ) ||
-                description
-                    .toLowerCase()
-                    .includes(
-                        search.toLowerCase()
-                    );
+                const matchesSearch =
+                    category
+                        .toLowerCase()
+                        .includes(
+                            search.toLowerCase()
+                        ) ||
+                    description
+                        .toLowerCase()
+                        .includes(
+                            search.toLowerCase()
+                        );
 
-            const matchesFilter =
-                filter === "all" ||
-                transaction.transaction_type.toLowerCase() ===
-                filter;
+                const matchesFilter =
+                    filter === "all" ||
+                    transaction.transaction_type.toLowerCase() ===
+                        filter;
 
-            return (
-                matchesSearch &&
-                matchesFilter
-            );
-        }
-    );
+                return (
+                    matchesSearch &&
+                    matchesFilter
+                );
+            }
+        );
 
     return (
         <div className="transactions-page">
@@ -155,7 +174,7 @@ function TransactionsPage({ onAddTransaction }) {
                                         type="button"
                                         className={
                                             filter ===
-                                                option
+                                            option
                                                 ? "active-filter"
                                                 : ""
                                         }
@@ -189,7 +208,7 @@ function TransactionsPage({ onAddTransaction }) {
                                 {error}
                             </p>
                         ) : filteredTransactions.length >
-                            0 ? (
+                          0 ? (
                             filteredTransactions.map(
                                 (
                                     transaction
@@ -209,7 +228,7 @@ function TransactionsPage({ onAddTransaction }) {
                                                 aria-hidden="true"
                                             >
                                                 {type ===
-                                                    "income"
+                                                "income"
                                                     ? "↓"
                                                     : "↑"}
                                             </div>
@@ -232,7 +251,7 @@ function TransactionsPage({ onAddTransaction }) {
                                                 className={`transaction-amount ${type}`}
                                             >
                                                 {type ===
-                                                    "income"
+                                                "income"
                                                     ? "+"
                                                     : "-"}
                                                 $
@@ -263,7 +282,6 @@ function TransactionsPage({ onAddTransaction }) {
             >
                 +
             </button>
-
         </div>
     );
 }
