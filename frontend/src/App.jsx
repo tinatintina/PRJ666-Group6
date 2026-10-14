@@ -3,104 +3,171 @@ import TransactionsPage from "./components/TransactionsPage";
 import AddTransactionPage from "./components/AddTransactionPage";
 import BottomNav from "./components/BottomNav";
 import BudgetPage from "./components/BudgetPage";
+import DashboardPage from "./components/DashboardPage";
 import "./App.css";
 
 function App() {
-  const [showLogin, setShowLogin] = useState(true);
-  const [currentPage, setCurrentPage] = useState("authentication");
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false);
+  const [showLogin, setShowLogin] =
+    useState(true);
+
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState("authentication");
+
+  const [
+    currentUser,
+    setCurrentUser,
+  ] = useState(null);
+
+  const [
+    authLoading,
+    setAuthLoading,
+  ] = useState(false);
 
   async function handleLogin(event) {
     event.preventDefault();
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+    const form =
+      event.currentTarget;
 
-    const email = formData.get("email").trim();
-    const password = formData.get("password");
+    const formData =
+      new FormData(form);
+
+    const email =
+      formData
+        .get("email")
+        .trim();
+
+    const password =
+      formData.get("password");
 
     try {
       setAuthLoading(true);
 
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      const response =
+        await fetch(
+          "/api/auth/login",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+            }),
+          }
+        );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Could not log in."
+          data.message ||
+            "Could not log in."
         );
       }
 
-      setCurrentUser(data.user);
-      setCurrentPage("transactions");
+      setCurrentUser(
+        data.user
+      );
+
+      setCurrentPage(
+        "transactions"
+      );
     } catch (error) {
-      console.error("Login error:", error);
+      console.error(
+        "Login error:",
+        error
+      );
+
       alert(error.message);
     } finally {
       setAuthLoading(false);
     }
   }
 
-  async function handleRegister(event) {
+  async function handleRegister(
+    event
+  ) {
     event.preventDefault();
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+    const form =
+      event.currentTarget;
 
-    const fullName = formData.get("fullName").trim();
-    const email = formData.get("email").trim();
-    const password = formData.get("password");
+    const formData =
+      new FormData(form);
+
+    const fullName =
+      formData
+        .get("fullName")
+        .trim();
+
+    const email =
+      formData
+        .get("email")
+        .trim();
+
+    const password =
+      formData.get("password");
+
     const confirmPassword =
-      formData.get("confirmPassword");
+      formData.get(
+        "confirmPassword"
+      );
 
-    const nameParts = fullName
-      .split(/\s+/)
-      .filter(Boolean);
+    const nameParts =
+      fullName
+        .split(/\s+/)
+        .filter(Boolean);
 
-    if (nameParts.length < 2) {
-      alert("Please enter your first and last name.");
+    if (
+      nameParts.length < 2
+    ) {
+      alert(
+        "Please enter your first and last name."
+      );
+
       return;
     }
 
-    const firstName = nameParts[0];
+    const firstName =
+      nameParts[0];
 
-    const lastName = nameParts
-      .slice(1)
-      .join(" ");
+    const lastName =
+      nameParts
+        .slice(1)
+        .join(" ");
 
     try {
       setAuthLoading(true);
 
-      const response = await fetch(
-        "/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            email,
-            password,
-            confirmPassword,
-            preferredCurrency: "CAD",
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          "/api/auth/register",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              firstName,
+              lastName,
+              email,
+              password,
+              confirmPassword,
+              preferredCurrency:
+                "CAD",
+            }),
+          }
+        );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -114,6 +181,7 @@ function App() {
       );
 
       form.reset();
+
       setShowLogin(true);
     } catch (error) {
       console.error(
@@ -131,8 +199,14 @@ function App() {
     transaction
   ) {
     if (!currentUser) {
-      alert("Please log in again.");
-      setCurrentPage("authentication");
+      alert(
+        "Please log in again."
+      );
+
+      setCurrentPage(
+        "authentication"
+      );
+
       return;
     }
 
@@ -140,29 +214,41 @@ function App() {
       let categoryId =
         transaction.categoryId;
 
-      if (transaction.customCategory) {
+      if (
+        transaction.customCategory
+      ) {
         const categoryResponse =
-          await fetch("/api/categories", {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              userId: currentUser.userId,
-              categoryName:
-                transaction.customCategory,
-              categoryType:
-                transaction.type === "income"
-                  ? "Income"
-                  : "Expense",
-            }),
-          });
+          await fetch(
+            "/api/categories",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify({
+                  userId:
+                    currentUser.userId,
+
+                  categoryName:
+                    transaction.customCategory,
+
+                  categoryType:
+                    transaction.type ===
+                    "income"
+                      ? "Income"
+                      : "Expense",
+                }),
+            }
+          );
 
         const categoryData =
           await categoryResponse.json();
 
-        if (!categoryResponse.ok) {
+        if (
+          !categoryResponse.ok
+        ) {
           throw new Error(
             categoryData.message ||
               "Could not create category."
@@ -175,34 +261,45 @@ function App() {
           categoryData.categoryId;
       }
 
-      const response = await fetch(
-        "/api/transactions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            userId: currentUser.userId,
-            categoryId,
-            amount: transaction.amount,
-            currency:
-              currentUser.preferredCurrency ||
-              "CAD",
-            transactionDate:
-              transaction.date,
-            transactionType:
-              transaction.type === "income"
-                ? "Income"
-                : "Expense",
-            description:
-              transaction.description,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          "/api/transactions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              userId:
+                currentUser.userId,
 
-      const data = await response.json();
+              categoryId,
+
+              amount:
+                transaction.amount,
+
+              currency:
+                currentUser.preferredCurrency ||
+                "CAD",
+
+              transactionDate:
+                transaction.date,
+
+              transactionType:
+                transaction.type ===
+                "income"
+                  ? "Income"
+                  : "Expense",
+
+              description:
+                transaction.description,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -216,7 +313,9 @@ function App() {
         data
       );
 
-      setCurrentPage("transactions");
+      setCurrentPage(
+        "transactions"
+      );
     } catch (error) {
       console.error(
         "Save transaction error:",
@@ -228,24 +327,62 @@ function App() {
   }
 
   if (
-    currentPage === "add-transaction"
+    currentPage ===
+    "add-transaction"
   ) {
     return (
       <AddTransactionPage
-        userId={currentUser?.userId}
-        onSave={handleSaveTransaction}
+        userId={
+          currentUser?.userId
+        }
+        onSave={
+          handleSaveTransaction
+        }
         onCancel={() =>
-          setCurrentPage("transactions")
+          setCurrentPage(
+            "transactions"
+          )
         }
       />
     );
   }
 
-  if (currentPage === "transactions") {
+  if (
+    currentPage === "home"
+  ) {
+    return (
+      <>
+        <DashboardPage
+          userId={
+            currentUser?.userId
+          }
+          firstName={
+            currentUser?.firstName
+          }
+        />
+
+        <BottomNav
+          currentPage={
+            currentPage
+          }
+          onNavigate={
+            setCurrentPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (
+    currentPage ===
+    "transactions"
+  ) {
     return (
       <>
         <TransactionsPage
-          userId={currentUser?.userId}
+          userId={
+            currentUser?.userId
+          }
           onAddTransaction={() =>
             setCurrentPage(
               "add-transaction"
@@ -254,23 +391,35 @@ function App() {
         />
 
         <BottomNav
-          currentPage={currentPage}
-          onNavigate={setCurrentPage}
+          currentPage={
+            currentPage
+          }
+          onNavigate={
+            setCurrentPage
+          }
         />
       </>
     );
   }
 
-  if (currentPage === "budget") {
+  if (
+    currentPage === "budget"
+  ) {
     return (
       <>
         <BudgetPage
-          userId={currentUser?.userId}
+          userId={
+            currentUser?.userId
+          }
         />
 
         <BottomNav
-          currentPage={currentPage}
-          onNavigate={setCurrentPage}
+          currentPage={
+            currentPage
+          }
+          onNavigate={
+            setCurrentPage
+          }
         />
       </>
     );
@@ -284,7 +433,9 @@ function App() {
             $
           </span>
 
-          <span>SMART SPEND</span>
+          <span>
+            SMART SPEND
+          </span>
         </div>
 
         <div className="auth-header">
@@ -304,7 +455,9 @@ function App() {
         {showLogin ? (
           <form
             className="auth-form"
-            onSubmit={handleLogin}
+            onSubmit={
+              handleLogin
+            }
           >
             <div className="form-group">
               <label htmlFor="loginEmail">
@@ -344,7 +497,9 @@ function App() {
             <button
               type="submit"
               className="auth-button"
-              disabled={authLoading}
+              disabled={
+                authLoading
+              }
             >
               {authLoading
                 ? "Logging in..."
@@ -352,12 +507,16 @@ function App() {
             </button>
 
             <p className="switch-text">
-              Don&apos;t have an account?{" "}
+              Don&apos;t have an
+              account?{" "}
+
               <button
                 type="button"
                 className="switch-button"
                 onClick={() =>
-                  setShowLogin(false)
+                  setShowLogin(
+                    false
+                  )
                 }
               >
                 Register
@@ -367,7 +526,9 @@ function App() {
         ) : (
           <form
             className="auth-form"
-            onSubmit={handleRegister}
+            onSubmit={
+              handleRegister
+            }
           >
             <div className="form-group">
               <label htmlFor="name">
@@ -430,7 +591,9 @@ function App() {
             <button
               type="submit"
               className="auth-button"
-              disabled={authLoading}
+              disabled={
+                authLoading
+              }
             >
               {authLoading
                 ? "Creating account..."
@@ -438,12 +601,16 @@ function App() {
             </button>
 
             <p className="switch-text">
-              Already have an account?{" "}
+              Already have an
+              account?{" "}
+
               <button
                 type="button"
                 className="switch-button"
                 onClick={() =>
-                  setShowLogin(true)
+                  setShowLogin(
+                    true
+                  )
                 }
               >
                 Login

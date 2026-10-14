@@ -1,0 +1,245 @@
+.dashboard-page {
+    min-height: 100vh;
+    padding-bottom: 95px;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+/* Header */
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 32px max(24px, calc((100% - 1100px) / 2));
+    background: var(--color-primary);
+    color: white;
+}
+
+.dashboard-brand {
+    margin: 0;
+    color: var(--color-accent) !important;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.dashboard-header h1 {
+    margin: 4px 0 6px;
+    font-size: 32px;
+}
+
+.dashboard-header > div > p:last-child {
+    margin: 0;
+    color: #cbd5e1;
+}
+
+.dashboard-avatar {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    background: #1e293b;
+    color: white;
+    font-weight: 700;
+}
+
+/* Main */
+
+.dashboard-content {
+    width: min(1100px, calc(100% - 40px));
+    margin: 32px auto;
+}
+
+.dashboard-error {
+    padding: 14px;
+    border: 1px solid #fecaca;
+    border-radius: var(--border-radius-small);
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* Summary */
+
+.dashboard-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+.summary-card {
+    padding: 22px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.summary-card p {
+    margin: 0 0 10px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.summary-card h2 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 25px;
+}
+
+.summary-card .income-value {
+    color: var(--color-income);
+}
+
+.summary-card .expense-value {
+    color: var(--color-expense);
+}
+
+/* Recent transactions */
+
+.recent-transactions-card {
+    margin-top: 24px;
+    padding: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.recent-heading h2 {
+    margin: 0 0 5px;
+    font-size: 21px;
+}
+
+.recent-heading p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.dashboard-transaction-list {
+    margin-top: 18px;
+}
+
+.dashboard-transaction {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 17px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.dashboard-transaction:last-child {
+    border-bottom: none;
+}
+
+.dashboard-transaction-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.dashboard-transaction-icon.income {
+    background: #dcfce7;
+    color: var(--color-income);
+}
+
+.dashboard-transaction-icon.expense {
+    background: #fee2e2;
+    color: var(--color-expense);
+}
+
+.dashboard-transaction-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.dashboard-transaction-details h3 {
+    margin: 0 0 4px;
+    font-size: 15px;
+}
+
+.dashboard-transaction-details p {
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-transaction-amount {
+    flex-shrink: 0;
+}
+
+.dashboard-transaction-amount.income {
+    color: var(--color-income);
+}
+
+.dashboard-transaction-amount.expense {
+    color: var(--color-expense);
+}
+
+.dashboard-empty {
+    margin: 0;
+    padding: 40px 0 15px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* Tablet */
+
+@media (max-width: 850px) {
+    .dashboard-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+    .dashboard-header {
+        padding: 24px 20px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 26px;
+    }
+
+    .dashboard-header > div > p:last-child {
+        font-size: 13px;
+    }
+
+    .dashboard-content {
+        width: calc(100% - 24px);
+        margin: 18px auto;
+    }
+
+    .dashboard-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .summary-card,
+    .recent-transactions-card {
+        padding: 18px 16px;
+    }
+
+    .dashboard-transaction {
+        gap: 10px;
+    }
+
+    .dashboard-transaction-amount {
+        font-size: 13px;
+    }
+}
