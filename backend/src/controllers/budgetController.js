@@ -1,15 +1,36 @@
 const pool = require("../config/db");
 
+// Budget columns plus spending computed live from Expense transactions.
+// remaining_balance is calculated on read so it can never drift out of sync.
+// If your budgets table has extra columns (e.g. created_at), add them here.
+const BUDGET_SELECT = `
+    SELECT b.budget_id,
+           b.user_id,
+           b.month,
+           b.budget_amount,
+           COALESCE(SUM(t.amount), 0) AS total_spent,
+           b.budget_amount - COALESCE(SUM(t.amount), 0) AS remaining_balance
+    FROM budgets b
+    LEFT JOIN transactions t
+           ON t.user_id = b.user_id
+          AND t.transaction_type = 'Expense'
+          AND LEFT(t.transaction_date, 7) = LEFT(b.month, 7)
+`;
+
+const isValidAmount = (value) =>
+    Number.isFinite(Number(value)) && Number(value) >= 0;
+
+
 // GET all budgets for a user
 const getBudgets = async (req, res) => {
     const { userId } = req.params;
 
     try {
         const [budgets] = await pool.query(
-            `SELECT *
-             FROM budgets
-             WHERE user_id = ?
-             ORDER BY month DESC`,
+            `${BUDGET_SELECT}
+             WHERE b.user_id = ?
+             GROUP BY b.budget_id
+             ORDER BY b.month DESC`,
             [userId]
         );
 
@@ -35,10 +56,10 @@ const getBudgetById = async (req, res) => {
 
     try {
         const [budgets] = await pool.query(
-            `SELECT *
-             FROM budgets
-             WHERE budget_id = ?
-             AND user_id = ?`,
+            `${BUDGET_SELECT}
+             WHERE b.budget_id = ?
+             AND b.user_id = ?
+             GROUP BY b.budget_id`,
             [id, userId]
         );
 
@@ -80,10 +101,10 @@ const createBudget = async (req, res) => {
         });
     }
 
-    if (Number(budgetAmount) < 0) {
+    if (!isValidAmount(budgetAmount)) {
         return res.status(400).json({
             success: false,
-            message: "Budget amount cannot be negative."
+            message: "Budget amount must be a valid non-negative number."
         });
     }
 
@@ -117,6 +138,8 @@ const createBudget = async (req, res) => {
             });
         }
 
+        // remaining_balance is still inserted to satisfy the column,
+        // but reads now compute it from transactions.
         const [result] = await pool.query(
             `INSERT INTO budgets
              (user_id, month, budget_amount, remaining_balance)
@@ -163,10 +186,10 @@ const updateBudget = async (req, res) => {
         });
     }
 
-    if (Number(budgetAmount) < 0) {
+    if (!isValidAmount(budgetAmount)) {
         return res.status(400).json({
             success: false,
-            message: "Budget amount cannot be negative."
+            message: "Budget amount must be a valid non-negative number."
         });
     }
 
@@ -188,16 +211,15 @@ const updateBudget = async (req, res) => {
             });
         }
 
+        // No longer resets remaining_balance; it is computed on read.
         const [result] = await pool.query(
             `UPDATE budgets
              SET month = ?,
-                 budget_amount = ?,
-                 remaining_balance = ?
+                 budget_amount = ?
              WHERE budget_id = ?
              AND user_id = ?`,
             [
                 month,
-                budgetAmount,
                 budgetAmount,
                 id,
                 userId
@@ -276,4 +298,3 @@ module.exports = {
     updateBudget,
     deleteBudget
 };
-
