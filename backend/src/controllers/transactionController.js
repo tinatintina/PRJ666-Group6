@@ -1,4 +1,3 @@
-
 const pool = require("../config/db");
 
 
@@ -37,6 +36,61 @@ const getTransactions = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Server error while fetching transactions."
+        });
+    }
+};
+
+
+// GET INCOME / EXPENSE TOTALS (optional ?month=YYYY-MM)
+const getTransactionTotals = async (req, res) => {
+    const { userId } = req.params;
+    const { month } = req.query;
+
+    if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+        return res.status(400).json({
+            success: false,
+            message: "Month must be in YYYY-MM format."
+        });
+    }
+
+    try {
+        let query = `
+            SELECT currency,
+                COALESCE(SUM(CASE WHEN transaction_type = 'Income' THEN amount END), 0) AS total_income,
+                COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount END), 0) AS total_expense
+            FROM transactions
+            WHERE user_id = ?`;
+        const params = [userId];
+
+        if (month) {
+            query += " AND DATE_FORMAT(transaction_date, '%Y-%m') = ?";
+            params.push(month);
+        }
+
+        // Grouped by currency so different currencies are never added together.
+        query += " GROUP BY currency";
+
+        const [rows] = await pool.query(query, params);
+
+        const totals = rows.map((r) => ({
+            currency: r.currency,
+            totalIncome: Number(r.total_income),
+            totalExpense: Number(r.total_expense),
+            balance: Number(r.total_income) - Number(r.total_expense)
+        }));
+
+        return res.status(200).json({
+            success: true,
+            month: month || "all",
+            totals
+        });
+
+    } catch (err) {
+        console.error("Get totals error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error while calculating totals."
         });
     }
 };
@@ -447,6 +501,7 @@ const deleteTransaction = async (req, res) => {
 
 module.exports = {
     getTransactions,
+    getTransactionTotals,
     getTransactionById,
     createTransaction,
     updateTransaction,
