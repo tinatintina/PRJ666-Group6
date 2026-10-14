@@ -74,6 +74,7 @@ function App() {
     }
 
     const firstName = nameParts[0];
+
     const lastName = nameParts
       .slice(1)
       .join(" ");
@@ -81,26 +82,30 @@ function App() {
     try {
       setAuthLoading(true);
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          password,
-          confirmPassword,
-          preferredCurrency: "CAD",
-        }),
-      });
+      const response = await fetch(
+        "/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            email,
+            password,
+            confirmPassword,
+            preferredCurrency: "CAD",
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Could not create account."
+          data.message ||
+            "Could not create account."
         );
       }
 
@@ -111,14 +116,20 @@ function App() {
       form.reset();
       setShowLogin(true);
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error(
+        "Registration error:",
+        error
+      );
+
       alert(error.message);
     } finally {
       setAuthLoading(false);
     }
   }
 
-  async function handleSaveTransaction(transaction) {
+  async function handleSaveTransaction(
+    transaction
+  ) {
     if (!currentUser) {
       alert("Please log in again.");
       setCurrentPage("authentication");
@@ -126,16 +137,16 @@ function App() {
     }
 
     try {
-      let categoryId = transaction.categoryId;
+      let categoryId =
+        transaction.categoryId;
 
-      // Create a custom category if Other was selected
       if (transaction.customCategory) {
-        const categoryResponse = await fetch(
-          "/api/categories",
-          {
+        const categoryResponse =
+          await fetch("/api/categories", {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type":
+                "application/json",
             },
             body: JSON.stringify({
               userId: currentUser.userId,
@@ -146,8 +157,7 @@ function App() {
                   ? "Income"
                   : "Expense",
             }),
-          }
-        );
+          });
 
         const categoryData =
           await categoryResponse.json();
@@ -160,7 +170,8 @@ function App() {
         }
 
         categoryId =
-          categoryData.category?.category_id ||
+          categoryData.category
+            ?.category_id ||
           categoryData.categoryId;
       }
 
@@ -169,7 +180,8 @@ function App() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             userId: currentUser.userId,
@@ -215,7 +227,9 @@ function App() {
     }
   }
 
-  if (currentPage === "add-transaction") {
+  if (
+    currentPage === "add-transaction"
+  ) {
     return (
       <AddTransactionPage
         userId={currentUser?.userId}
@@ -233,7 +247,9 @@ function App() {
         <TransactionsPage
           userId={currentUser?.userId}
           onAddTransaction={() =>
-            setCurrentPage("add-transaction")
+            setCurrentPage(
+              "add-transaction"
+            )
           }
         />
 
@@ -248,7 +264,9 @@ function App() {
   if (currentPage === "budget") {
     return (
       <>
-        <BudgetPage />
+        <BudgetPage
+          userId={currentUser?.userId}
+        />
 
         <BottomNav
           currentPage={currentPage}
