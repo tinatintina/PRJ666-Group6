@@ -30,7 +30,7 @@
     font-size: 32px;
 }
 
-.dashboard-header > div > p:last-child {
+.dashboard-header>div>p:last-child {
     margin: 0;
     color: #cbd5e1;
 }
@@ -48,7 +48,7 @@
     font-weight: 700;
 }
 
-/* Main */
+/* Main content */
 
 .dashboard-content {
     width: min(1100px, calc(100% - 40px));
@@ -56,6 +56,7 @@
 }
 
 .dashboard-error {
+    margin: 0 0 18px;
     padding: 14px;
     border: 1px solid #fecaca;
     border-radius: var(--border-radius-small);
@@ -63,7 +64,7 @@
     color: #b91c1c;
 }
 
-/* Summary */
+/* Summary cards */
 
 .dashboard-summary {
     display: grid;
@@ -72,6 +73,7 @@
 }
 
 .summary-card {
+    min-width: 0;
     padding: 22px;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-large);
@@ -98,6 +100,82 @@
 
 .summary-card .expense-value {
     color: var(--color-expense);
+}
+
+/* Spending health */
+
+.health-bar {
+    width: 100%;
+    height: 8px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.health-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+    transition: width 0.3s ease;
+}
+
+/* Quick actions */
+
+.quick-actions-card {
+    margin-top: 24px;
+    padding: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.quick-actions-card h2 {
+    margin: 0 0 18px;
+    font-size: 21px;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.quick-actions button {
+    min-height: 52px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-small);
+    background: white;
+    color: var(--color-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.quick-actions button:first-child {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: white;
+}
+
+.quick-actions button:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.quick-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
 }
 
 /* Recent transactions */
@@ -197,11 +275,22 @@
     text-align: center;
 }
 
+/* Keyboard focus */
+
+.quick-actions button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
 /* Tablet */
 
 @media (max-width: 850px) {
     .dashboard-summary {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -216,7 +305,7 @@
         font-size: 26px;
     }
 
-    .dashboard-header > div > p:last-child {
+    .dashboard-header>div>p:last-child {
         font-size: 13px;
     }
 
@@ -231,8 +320,14 @@
     }
 
     .summary-card,
+    .quick-actions-card,
     .recent-transactions-card {
         padding: 18px 16px;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 
     .dashboard-transaction {
