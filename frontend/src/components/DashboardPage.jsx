@@ -68,6 +68,7 @@ function formatDate(dateValue) {
 function DashboardPage({
     userId,
     firstName,
+    onNavigate,
 }) {
     const [
         transactions,
@@ -128,25 +129,25 @@ function DashboardPage({
                 ) {
                     throw new Error(
                         transactionData.message ||
-                            "Could not load transactions."
+                        "Could not load transactions."
                     );
                 }
 
                 if (!budgetResponse.ok) {
                     throw new Error(
                         budgetData.message ||
-                            "Could not load budget."
+                        "Could not load budget."
                     );
                 }
 
                 setTransactions(
                     transactionData.transactions ||
-                        []
+                    []
                 );
 
                 setBudgets(
                     budgetData.budgets ||
-                        []
+                    []
                 );
             } catch (error) {
                 console.error(
@@ -173,7 +174,7 @@ function DashboardPage({
     const monthlyBudget =
         Number(
             currentBudget?.budget_amount ||
-                0
+            0
         );
 
     const monthlyTransactions =
@@ -202,7 +203,7 @@ function DashboardPage({
                     total +
                     Number(
                         transaction.amount ||
-                            0
+                        0
                     ),
                 0
             );
@@ -222,7 +223,7 @@ function DashboardPage({
                     total +
                     Number(
                         transaction.amount ||
-                            0
+                        0
                     ),
                 0
             );
@@ -230,6 +231,18 @@ function DashboardPage({
     const remainingBudget =
         monthlyBudget -
         totalExpenses;
+
+    const spendingHealth =
+        monthlyBudget > 0
+            ? Math.max(
+                0,
+                Math.round(
+                    (remainingBudget /
+                        monthlyBudget) *
+                    100
+                )
+            )
+            : 0;
 
     const recentTransactions =
         transactions.slice(0, 5);
@@ -282,56 +295,75 @@ function DashboardPage({
 
                 <div className="dashboard-summary">
                     <article className="summary-card">
-                        <p>
-                            Monthly Budget
-                        </p>
-
-                        <h2>
-                            $
-                            {formatMoney(
-                                monthlyBudget
-                            )}
-                        </h2>
-                    </article>
-
-                    <article className="summary-card">
-                        <p>
-                            Total Income
-                        </p>
-
+                        <p>Total Income</p>
                         <h2 className="income-value">
-                            +$
-                            {formatMoney(
-                                totalIncome
-                            )}
+                            +${formatMoney(totalIncome)}
                         </h2>
                     </article>
 
                     <article className="summary-card">
-                        <p>
-                            Total Expenses
-                        </p>
-
+                        <p>Total Expenses</p>
                         <h2 className="expense-value">
-                            -$
-                            {formatMoney(
-                                totalExpenses
-                            )}
+                            -${formatMoney(totalExpenses)}
                         </h2>
                     </article>
 
                     <article className="summary-card">
-                        <p>
-                            Remaining Budget
-                        </p>
+                        <p>Remaining Budget</p>
 
                         <h2>
-                            $
-                            {formatMoney(
-                                remainingBudget
-                            )}
+                            ${formatMoney(remainingBudget)}
                         </h2>
                     </article>
+
+                    <article className="summary-card">
+                        <p>Spending Health</p>
+
+                        <h2>{spendingHealth} / 100</h2>
+                        <div className="health-bar">
+                            <div className="health-bar-fill"
+                                style={{
+                                    width: `${spendingHealth}%`,
+                                }}
+                            />
+                        </div>
+                    </article>
+                </div>
+
+                <div className="quick-actions-card">
+                    <h2>Quick Actions</h2>
+
+                    <div className="quick-actions">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onNavigate("add-transaction")
+                            }
+                        >
+                            + Transaction
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                onNavigate("budget")
+                            }
+                        >
+                            Budget
+                        </button>
+
+                        <button type="button" disabled>
+                            Reports
+                        </button>
+
+                        <button type="button" disabled>
+                            Goals
+                        </button>
+
+                        <button type="button" disabled>
+                            Settings
+                        </button>
+                    </div>
                 </div>
 
                 <div className="recent-transactions-card">
@@ -348,7 +380,7 @@ function DashboardPage({
                     </div>
 
                     {recentTransactions.length ===
-                    0 ? (
+                        0 ? (
                         <p className="dashboard-empty">
                             No transactions yet.
                         </p>
@@ -375,7 +407,7 @@ function DashboardPage({
                                                 className={`dashboard-transaction-icon ${type}`}
                                             >
                                                 {type ===
-                                                "income"
+                                                    "income"
                                                     ? "↓"
                                                     : "↑"}
                                             </div>
@@ -400,7 +432,7 @@ function DashboardPage({
                                                 className={`dashboard-transaction-amount ${type}`}
                                             >
                                                 {type ===
-                                                "income"
+                                                    "income"
                                                     ? "+"
                                                     : "-"}
                                                 $

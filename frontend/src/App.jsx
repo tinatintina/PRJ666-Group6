@@ -67,7 +67,7 @@ function App() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Could not log in."
+          "Could not log in."
         );
       }
 
@@ -172,7 +172,7 @@ function App() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Could not create account."
+          "Could not create account."
         );
       }
 
@@ -236,7 +236,7 @@ function App() {
 
                   categoryType:
                     transaction.type ===
-                    "income"
+                      "income"
                       ? "Income"
                       : "Expense",
                 }),
@@ -251,7 +251,7 @@ function App() {
         ) {
           throw new Error(
             categoryData.message ||
-              "Could not create category."
+            "Could not create category."
           );
         }
 
@@ -288,7 +288,7 @@ function App() {
 
               transactionType:
                 transaction.type ===
-                "income"
+                  "income"
                   ? "Income"
                   : "Expense",
 
@@ -304,7 +304,7 @@ function App() {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Could not save transaction."
+          "Could not save transaction."
         );
       }
 
@@ -358,6 +358,9 @@ function App() {
           }
           firstName={
             currentUser?.firstName
+          }
+          onNavigate={
+            setCurrentPage
           }
         />
 

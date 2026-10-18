@@ -60,6 +60,15 @@ function AddTransactionPage({
     // categories for the logged-in user
     useEffect(() => {
         async function loadCategories() {
+            if (!userId) {
+                setCategoryError(
+                    "No logged-in user found."
+                );
+
+                setLoadingCategories(false);
+                return;
+            }
+
             try {
                 setLoadingCategories(true);
                 setCategoryError("");
@@ -74,7 +83,7 @@ function AddTransactionPage({
                 if (!response.ok) {
                     throw new Error(
                         data.message ||
-                            "Could not load categories."
+                        "Could not load categories."
                     );
                 }
 
@@ -95,15 +104,7 @@ function AddTransactionPage({
             }
         }
 
-        if (userId) {
-            loadCategories();
-        } else {
-            setCategoryError(
-                "No logged-in user found."
-            );
-
-            setLoadingCategories(false);
-        }
+        loadCategories();
     }, [userId]);
 
     // Only show categories that match
@@ -206,7 +207,7 @@ function AddTransactionPage({
                                         type="button"
                                         className={
                                             type ===
-                                            option
+                                                option
                                                 ? "active-type"
                                                 : ""
                                         }
@@ -308,27 +309,27 @@ function AddTransactionPage({
 
                         {categoryId ===
                             "other" && (
-                            <input
-                                id="customCategory"
-                                className="custom-category-input"
-                                type="text"
-                                value={
-                                    customCategory
-                                }
-                                onChange={(
-                                    event
-                                ) =>
-                                    setCustomCategory(
+                                <input
+                                    id="customCategory"
+                                    className="custom-category-input"
+                                    type="text"
+                                    value={
+                                        customCategory
+                                    }
+                                    onChange={(
                                         event
-                                            .target
-                                            .value
-                                    )
-                                }
-                                placeholder="Enter your category"
-                                maxLength="100"
-                                required
-                            />
-                        )}
+                                    ) =>
+                                        setCustomCategory(
+                                            event
+                                                .target
+                                                .value
+                                        )
+                                    }
+                                    placeholder="Enter your category"
+                                    maxLength="100"
+                                    required
+                                />
+                            )}
 
                         {categoryError && (
                             <p className="category-error">
