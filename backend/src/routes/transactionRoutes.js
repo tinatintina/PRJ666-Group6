@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
     getTransactions,
+    getTransactionTotals,
     getTransactionById,
     createTransaction,
     updateTransaction,
@@ -13,6 +14,11 @@ const router = express.Router();
 
 // Get all transactions for one user
 router.get("/:userId", getTransactions);
+
+
+// Get income/expense totals (optional ?month=YYYY-MM)
+// Must stay above "/:userId/:id" so "totals" is not treated as an ID
+router.get("/:userId/totals", getTransactionTotals);
 
 
 // Get one transaction
