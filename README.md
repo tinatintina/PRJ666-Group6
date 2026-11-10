@@ -60,6 +60,7 @@ Student Finance & Expense Management System
 - Ananeya Devarasan
 - Zena Mohamed
 - Rehat Preet Kaur
+- Jaspreet Kaur
  
 
 ## Project Description
