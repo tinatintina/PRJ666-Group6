@@ -34,7 +34,8 @@ function BottomNav({
         if (
             page === "home" ||
             page === "transactions" ||
-            page === "budget"
+            page === "budget" ||
+            page === "profile"
         ) {
             onNavigate(page);
         }
@@ -48,7 +49,7 @@ function BottomNav({
                     type="button"
                     className={
                         currentPage ===
-                        item.page
+                            item.page
                             ? "active-navigation"
                             : ""
                     }
