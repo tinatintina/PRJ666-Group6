@@ -352,7 +352,10 @@ function DashboardPage({
                             Budget
                         </button>
 
-                        <button type="button" disabled>
+                        <button
+                            type="button"
+                            onClick={() => onNavigate("reports")}
+                        >
                             Reports
                         </button>
 
