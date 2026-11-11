@@ -5,6 +5,7 @@ import BottomNav from "./components/BottomNav";
 import BudgetPage from "./components/BudgetPage";
 import DashboardPage from "./components/DashboardPage";
 import ProfilePage from "./components/ProfilePage";
+import ReportsPage from "./components/ReportsPage";
 import "./App.css";
 
 function App() {
@@ -430,6 +431,21 @@ function App() {
           onNavigate={
             setCurrentPage
           }
+        />
+      </>
+    );
+  }
+
+  if (currentPage === "reports") {
+    return (
+      <>
+        <ReportsPage
+          userId={currentUser?.userId}
+        />
+
+        <BottomNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
         />
       </>
     );

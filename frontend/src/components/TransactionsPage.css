@@ -316,3 +316,18 @@
         font-size: 18px;
     }
 }
+
+.bottom-navigation button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.bottom-navigation button small {
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.bottom-navigation button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -4px;
+}
