@@ -97,7 +97,9 @@ function BudgetPage({ userId }) {
     }, [userId, refreshBudget]);
 
     const currentBudget = budgets.find(
-        (budget) => budget.month === currentMonth
+        (budget) =>
+            String(budget.month).slice(0, 7) ===
+            currentMonth
     );
 
     const monthlyBudget = Number(
@@ -286,7 +288,7 @@ function BudgetPage({ userId }) {
 
                 <div className="overall-budget-card">
                     <p className="budget-month">
-                        {currentMonthLabel} · Overall
+                        {currentMonthLabel} - Overall
                         Budget
                     </p>
 

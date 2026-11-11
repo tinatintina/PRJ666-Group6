@@ -1,61 +1,64 @@
-function BottomNav({
-    currentPage,
-    onNavigate,
-}) {
+function BottomNav({ currentPage, onNavigate }) {
     const items = [
         {
             page: "home",
-            icon: "⌂",
+            icon: "\u2302",
             label: "Home",
+            available: true,
         },
         {
             page: "transactions",
-            icon: "↕",
+            icon: "\u2195",
             label: "Transactions",
+            available: true,
         },
         {
             page: "budget",
-            icon: "▣",
+            icon: "\u25A3",
             label: "Budget",
+            available: true,
         },
         {
             page: "reports",
-            icon: "▥",
+            icon: "\u25A5",
             label: "Reports",
+            available: true,
         },
         {
             page: "profile",
-            icon: "●",
+            icon: "\u25CF",
             label: "Profile",
+            available: true,
         },
     ];
 
-    function handleNavigation(page) {
-        if (
-            page === "home" ||
-            page === "transactions" ||
-            page === "budget"
-        ) {
-            onNavigate(page);
-        }
-    }
-
     return (
-        <nav className="bottom-navigation">
+        <nav
+            className="bottom-navigation"
+            aria-label="Main navigation"
+        >
             {items.map((item) => (
                 <button
                     key={item.page}
                     type="button"
                     className={
-                        currentPage ===
-                        item.page
+                        currentPage === item.page
                             ? "active-navigation"
                             : ""
                     }
                     onClick={() =>
-                        handleNavigation(
-                            item.page
-                        )
+                        onNavigate(item.page)
+                    }
+                    disabled={!item.available}
+                    title={
+                        item.available
+                            ? item.label
+                            : "Reports coming soon"
+                    }
+                    aria-current={
+                        currentPage === item.page
+                            ? "page"
+                            : undefined
                     }
                 >
                     <span aria-hidden="true">
@@ -63,6 +66,10 @@ function BottomNav({
                     </span>
 
                     {item.label}
+
+                    {!item.available && (
+                        <small>Coming soon</small>
+                    )}
                 </button>
             ))}
         </nav>

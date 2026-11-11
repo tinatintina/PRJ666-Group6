@@ -4,6 +4,8 @@ import AddTransactionPage from "./components/AddTransactionPage";
 import BottomNav from "./components/BottomNav";
 import BudgetPage from "./components/BudgetPage";
 import DashboardPage from "./components/DashboardPage";
+import ProfilePage from "./components/ProfilePage";
+import ReportsPage from "./components/ReportsPage";
 import "./App.css";
 
 function App() {
@@ -193,6 +195,12 @@ function App() {
     } finally {
       setAuthLoading(false);
     }
+  }
+
+  function handleLogout() {
+    setCurrentUser(null);
+    setCurrentPage("authentication");
+    setShowLogin(true);
   }
 
   async function handleSaveTransaction(
@@ -423,6 +431,38 @@ function App() {
           onNavigate={
             setCurrentPage
           }
+        />
+      </>
+    );
+  }
+
+  if (currentPage === "reports") {
+    return (
+      <>
+        <ReportsPage
+          userId={currentUser?.userId}
+        />
+
+        <BottomNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+        />
+      </>
+    );
+  }
+
+  if (currentPage === "profile") {
+    return (
+      <>
+        <ProfilePage
+          userId={currentUser?.userId}
+          onUserUpdated={setCurrentUser}
+          onLogout={handleLogout}
+        />
+
+        <BottomNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
         />
       </>
     );
