@@ -7,6 +7,11 @@ import DashboardPage from "./components/DashboardPage";
 import ProfilePage from "./components/ProfilePage";
 import ReportsPage from "./components/ReportsPage";
 import "./App.css";
+import {
+  hasErrors,
+  validateLogin,
+  validateRegister,
+} from "./utils/validation";
 
 function App() {
   const [showLogin, setShowLogin] =
@@ -27,6 +32,64 @@ function App() {
     setAuthLoading,
   ] = useState(false);
 
+  // Field-level errors for the login / register forms
+  const [
+    authErrors,
+    setAuthErrors,
+  ] = useState({});
+
+  // Error or success message returned by the server
+  const [
+    authMessage,
+    setAuthMessage,
+  ] = useState(null);
+
+  function switchAuthForm(toLogin) {
+    setShowLogin(toLogin);
+    setAuthErrors({});
+    setAuthMessage(null);
+  }
+
+  // Remove a field's error as soon as the user edits it
+  function clearAuthError(event) {
+    const field =
+      event.target.name;
+
+    if (authErrors[field]) {
+      setAuthErrors((current) => {
+        const next = {
+          ...current,
+        };
+
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  // Props for an auth input that may have an error
+  function authErrorProps(field) {
+    return authErrors[field]
+      ? {
+        "aria-invalid": true,
+        "aria-describedby": `${field}-error`,
+        className: "input-error",
+      }
+      : {};
+  }
+
+  function renderAuthError(field) {
+    return authErrors[field] ? (
+      <p
+        id={`${field}-error`}
+        className="field-error"
+        role="alert"
+      >
+        {authErrors[field]}
+      </p>
+    ) : null;
+  }
+
   async function handleLogin(event) {
     event.preventDefault();
 
@@ -43,6 +106,26 @@ function App() {
 
     const password =
       formData.get("password");
+
+    const validationErrors =
+      validateLogin({
+        email,
+        password,
+      });
+
+    setAuthErrors(
+      validationErrors
+    );
+
+    setAuthMessage(null);
+
+    if (
+      hasErrors(
+        validationErrors
+      )
+    ) {
+      return;
+    }
 
     try {
       setAuthLoading(true);
@@ -86,7 +169,10 @@ function App() {
         error
       );
 
-      alert(error.message);
+      setAuthMessage({
+        type: "error",
+        text: error.message,
+      });
     } finally {
       setAuthLoading(false);
     }
@@ -121,20 +207,32 @@ function App() {
         "confirmPassword"
       );
 
+    const validationErrors =
+      validateRegister({
+        fullName,
+        email,
+        password,
+        confirmPassword,
+      });
+
+    setAuthErrors(
+      validationErrors
+    );
+
+    setAuthMessage(null);
+
+    if (
+      hasErrors(
+        validationErrors
+      )
+    ) {
+      return;
+    }
+
     const nameParts =
       fullName
         .split(/\s+/)
         .filter(Boolean);
-
-    if (
-      nameParts.length < 2
-    ) {
-      alert(
-        "Please enter your first and last name."
-      );
-
-      return;
-    }
 
     const firstName =
       nameParts[0];
@@ -178,20 +276,24 @@ function App() {
         );
       }
 
-      alert(
-        "Account created successfully. Please log in."
-      );
-
       form.reset();
 
-      setShowLogin(true);
+      switchAuthForm(true);
+
+      setAuthMessage({
+        type: "success",
+        text: "Account created successfully. Please log in.",
+      });
     } catch (error) {
       console.error(
         "Registration error:",
         error
       );
 
-      alert(error.message);
+      setAuthMessage({
+        type: "error",
+        text: error.message,
+      });
     } finally {
       setAuthLoading(false);
     }
@@ -200,138 +302,85 @@ function App() {
   function handleLogout() {
     setCurrentUser(null);
     setCurrentPage("authentication");
-    setShowLogin(true);
+    switchAuthForm(true);
   }
 
+  // Saves a transaction. Throws an Error on failure so
+  // AddTransactionPage can show the message on the form.
   async function handleSaveTransaction(
     transaction
   ) {
     if (!currentUser) {
-      alert(
-        "Please log in again."
-      );
-
       setCurrentPage(
         "authentication"
       );
 
-      return;
+      throw new Error(
+        "Please log in again."
+      );
     }
 
-    try {
-      let categoryId =
-        transaction.categoryId;
+    // When "Other" is chosen, send customCategory and no
+    // categoryId. The transaction API reuses the user's
+    // existing category with that name or creates it, so
+    // the same custom category can be used more than once.
+    const response =
+      await fetch(
+        "/api/transactions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            userId:
+              currentUser.userId,
 
-      if (
-        transaction.customCategory
-      ) {
-        const categoryResponse =
-          await fetch(
-            "/api/categories",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-              body:
-                JSON.stringify({
-                  userId:
-                    currentUser.userId,
+            categoryId:
+              transaction.customCategory
+                ? null
+                : transaction.categoryId,
 
-                  categoryName:
-                    transaction.customCategory,
+            customCategory:
+              transaction.customCategory ||
+              undefined,
 
-                  categoryType:
-                    transaction.type ===
-                      "income"
-                      ? "Income"
-                      : "Expense",
-                }),
-            }
-          );
+            amount:
+              transaction.amount,
 
-        const categoryData =
-          await categoryResponse.json();
+            currency:
+              currentUser.preferredCurrency ||
+              "CAD",
 
-        if (
-          !categoryResponse.ok
-        ) {
-          throw new Error(
-            categoryData.message ||
-            "Could not create category."
-          );
+            transactionDate:
+              transaction.date,
+
+            transactionType:
+              transaction.type ===
+                "income"
+                ? "Income"
+                : "Expense",
+
+            description:
+              transaction.description,
+          }),
         }
-
-        categoryId =
-          categoryData.category
-            ?.category_id ||
-          categoryData.categoryId;
-      }
-
-      const response =
-        await fetch(
-          "/api/transactions",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              userId:
-                currentUser.userId,
-
-              categoryId,
-
-              amount:
-                transaction.amount,
-
-              currency:
-                currentUser.preferredCurrency ||
-                "CAD",
-
-              transactionDate:
-                transaction.date,
-
-              transactionType:
-                transaction.type ===
-                  "income"
-                  ? "Income"
-                  : "Expense",
-
-              description:
-                transaction.description,
-            }),
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-          "Could not save transaction."
-        );
-      }
-
-      console.log(
-        "Transaction saved:",
-        data
       );
 
-      setCurrentPage(
-        "transactions"
-      );
-    } catch (error) {
-      console.error(
-        "Save transaction error:",
-        error
-      );
+    const data =
+      await response.json();
 
-      alert(error.message);
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Could not save transaction."
+      );
     }
+
+    setCurrentPage(
+      "transactions"
+    );
   }
 
   if (
@@ -495,12 +544,35 @@ function App() {
           </p>
         </div>
 
+        {authMessage && (
+          <p
+            className={
+              authMessage.type ===
+                "success"
+                ? "auth-message auth-message-success"
+                : "auth-message auth-message-error"
+            }
+            role={
+              authMessage.type ===
+                "success"
+                ? "status"
+                : "alert"
+            }
+          >
+            {authMessage.text}
+          </p>
+        )}
+
         {showLogin ? (
           <form
             className="auth-form"
             onSubmit={
               handleLogin
             }
+            onChange={
+              clearAuthError
+            }
+            noValidate
           >
             <div className="form-group">
               <label htmlFor="loginEmail">
@@ -512,8 +584,12 @@ function App() {
                 name="email"
                 type="email"
                 placeholder="Enter your email"
+                autoComplete="email"
                 required
+                {...authErrorProps("email")}
               />
+
+              {renderAuthError("email")}
             </div>
 
             <div className="form-group">
@@ -526,8 +602,12 @@ function App() {
                 name="password"
                 type="password"
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 required
+                {...authErrorProps("password")}
               />
+
+              {renderAuthError("password")}
             </div>
 
             <button
@@ -557,7 +637,7 @@ function App() {
                 type="button"
                 className="switch-button"
                 onClick={() =>
-                  setShowLogin(
+                  switchAuthForm(
                     false
                   )
                 }
@@ -572,6 +652,10 @@ function App() {
             onSubmit={
               handleRegister
             }
+            onChange={
+              clearAuthError
+            }
+            noValidate
           >
             <div className="form-group">
               <label htmlFor="name">
@@ -583,8 +667,13 @@ function App() {
                 name="fullName"
                 type="text"
                 placeholder="Enter your full name"
+                autoComplete="name"
+                maxLength="101"
                 required
+                {...authErrorProps("fullName")}
               />
+
+              {renderAuthError("fullName")}
             </div>
 
             <div className="form-group">
@@ -597,8 +686,13 @@ function App() {
                 name="email"
                 type="email"
                 placeholder="Enter your email"
+                autoComplete="email"
+                maxLength="100"
                 required
+                {...authErrorProps("email")}
               />
+
+              {renderAuthError("email")}
             </div>
 
             <div className="form-group">
@@ -612,8 +706,16 @@ function App() {
                 type="password"
                 placeholder="Create a password"
                 minLength="8"
+                autoComplete="new-password"
                 required
+                {...authErrorProps("password")}
               />
+
+              {renderAuthError("password") || (
+                <p className="field-hint">
+                  At least 8 characters, with a letter and a number.
+                </p>
+              )}
             </div>
 
             <div className="form-group">
@@ -627,8 +729,12 @@ function App() {
                 type="password"
                 placeholder="Confirm your password"
                 minLength="8"
+                autoComplete="new-password"
                 required
+                {...authErrorProps("confirmPassword")}
               />
+
+              {renderAuthError("confirmPassword")}
             </div>
 
             <button
@@ -651,7 +757,7 @@ function App() {
                 type="button"
                 className="switch-button"
                 onClick={() =>
-                  setShowLogin(
+                  switchAuthForm(
                     true
                   )
                 }

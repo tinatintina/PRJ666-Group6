@@ -168,3 +168,39 @@
     font-size: 26px;
   }
 }
+/* ---------- Form validation ---------- */
+.field-error {
+  margin: 6px 0 0;
+  color: #c0392b;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.field-hint {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.form-group input.input-error,
+.form-group select.input-error {
+  border-color: #c0392b;
+  background-color: #fdf3f2;
+}
+
+.auth-message {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.auth-message-error {
+  background-color: #fdecea;
+  color: #a93226;
+}
+
+.auth-message-success {
+  background-color: #e8f6ee;
+  color: #1e7b47;
+}

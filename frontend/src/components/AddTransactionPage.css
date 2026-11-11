@@ -166,3 +166,30 @@
     color: var(--color-expense);
     font-size: 13px;
 }
+/* ---------- Form validation ---------- */
+.field-error {
+    margin: 6px 0 0;
+    color: #c0392b;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.add-transaction-card .input-error,
+.add-transaction-card select.input-error {
+    border-color: #c0392b;
+    background-color: #fdf3f2;
+}
+
+.form-submit-error {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: #fdecea;
+    color: #a93226;
+    font-size: 0.9rem;
+}
+
+.save-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
