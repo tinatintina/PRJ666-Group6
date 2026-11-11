@@ -1,18 +1,11 @@
 import { useEffect, useState } from "react";
 import "./AddTransactionPage.css";
-
-// Local date as YYYY-MM-DD
-function getTodayString() {
-    const now = new Date();
-    const offsetMs =
-        now.getTimezoneOffset() * 60000;
-
-    return new Date(
-        now.getTime() - offsetMs
-    )
-        .toISOString()
-        .slice(0, 10);
-}
+import {
+    getTodayString,
+    hasErrors,
+    MAX_AMOUNT,
+    validateTransaction,
+} from "../utils/validation";
 
 function AddTransactionPage({
     userId,
@@ -55,6 +48,32 @@ function AddTransactionPage({
         categoryError,
         setCategoryError,
     ] = useState("");
+
+    // Field-level validation errors
+    const [errors, setErrors] =
+        useState({});
+
+    // Error returned by the server on save
+    const [submitError, setSubmitError] =
+        useState("");
+
+    const [saving, setSaving] =
+        useState(false);
+
+    // Remove a field's error as soon as the user edits it
+    function clearError(field) {
+        setSubmitError("");
+
+        setErrors((current) => {
+            if (!current[field]) {
+                return current;
+            }
+
+            const next = { ...current };
+            delete next[field];
+            return next;
+        });
+    }
 
     // Load default categories and custom
     // categories for the logged-in user
@@ -120,6 +139,7 @@ function AddTransactionPage({
         setType(newType);
         setCategoryId("");
         setCustomCategory("");
+        clearError("category");
     }
 
     function handleCategoryChange(event) {
@@ -130,6 +150,8 @@ function AddTransactionPage({
             selectedCategory
         );
 
+        clearError("category");
+
         if (
             selectedCategory !== "other"
         ) {
@@ -137,10 +159,33 @@ function AddTransactionPage({
         }
     }
 
-    function handleSubmit(event) {
+    async function handleSubmit(event) {
         event.preventDefault();
 
-        onSave({
+        if (saving) {
+            return;
+        }
+
+        const validationErrors =
+            validateTransaction({
+                amount,
+                categoryId,
+                customCategory,
+                description,
+                date,
+            });
+
+        setErrors(validationErrors);
+        setSubmitError("");
+
+        if (hasErrors(validationErrors)) {
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            await onSave({
             type,
             amount: Number(amount),
 
@@ -158,7 +203,38 @@ function AddTransactionPage({
                 description.trim(),
 
             date,
-        });
+            });
+        } catch (error) {
+            setSubmitError(
+                error.message ||
+                "Could not save transaction."
+            );
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    // Props for an input that has an error message under it
+    function errorProps(field) {
+        return errors[field]
+            ? {
+                "aria-invalid": true,
+                "aria-describedby": `${field}-error`,
+                className: "input-error",
+            }
+            : {};
+    }
+
+    function renderError(field) {
+        return errors[field] ? (
+            <p
+                id={`${field}-error`}
+                className="field-error"
+                role="alert"
+            >
+                {errors[field]}
+            </p>
+        ) : null;
     }
 
     return (
@@ -181,6 +257,7 @@ function AddTransactionPage({
                 <form
                     className="add-transaction-card"
                     onSubmit={handleSubmit}
+                    noValidate
                 >
                     <div className="form-group">
                         <span
@@ -246,19 +323,23 @@ function AddTransactionPage({
                             inputMode="decimal"
                             placeholder="0.00"
                             min="0.01"
-                            max="99999999.99"
+                            max={MAX_AMOUNT}
                             step="0.01"
                             value={amount}
                             onChange={(
                                 event
-                            ) =>
+                            ) => {
                                 setAmount(
                                     event.target
                                         .value
-                                )
-                            }
+                                );
+                                clearError("amount");
+                            }}
                             required
+                            {...errorProps("amount")}
                         />
+
+                        {renderError("amount")}
                     </div>
 
                     <div className="form-group">
@@ -276,6 +357,9 @@ function AddTransactionPage({
                                 loadingCategories
                             }
                             required
+                            {...(categoryId !== "other"
+                                ? errorProps("category")
+                                : {})}
                         >
                             <option value="">
                                 {loadingCategories
@@ -318,18 +402,28 @@ function AddTransactionPage({
                                     }
                                     onChange={(
                                         event
-                                    ) =>
+                                    ) => {
                                         setCustomCategory(
                                             event
                                                 .target
                                                 .value
-                                        )
-                                    }
+                                        );
+                                        clearError("category");
+                                    }}
                                     placeholder="Enter your category"
                                     maxLength="100"
                                     required
+                                    aria-label="Custom category name"
+                                    {...errorProps("category")}
+                                    className={
+                                        errors.category
+                                            ? "custom-category-input input-error"
+                                            : "custom-category-input"
+                                    }
                                 />
                             )}
+
+                        {renderError("category")}
 
                         {categoryError && (
                             <p className="category-error">
@@ -356,13 +450,17 @@ function AddTransactionPage({
                             }
                             onChange={(
                                 event
-                            ) =>
+                            ) => {
                                 setDescription(
                                     event.target
                                         .value
-                                )
-                            }
+                                );
+                                clearError("description");
+                            }}
+                            {...errorProps("description")}
                         />
+
+                        {renderError("description")}
                     </div>
 
                     <div className="form-group">
@@ -374,24 +472,42 @@ function AddTransactionPage({
                             id="date"
                             type="date"
                             value={date}
+                            min="2000-01-01"
+                            max={getTodayString()}
                             onChange={(
                                 event
-                            ) =>
+                            ) => {
                                 setDate(
                                     event.target
                                         .value
-                                )
-                            }
+                                );
+                                clearError("date");
+                            }}
                             required
+                            {...errorProps("date")}
                         />
+
+                        {renderError("date")}
                     </div>
+
+                    {submitError && (
+                        <p
+                            className="form-submit-error"
+                            role="alert"
+                        >
+                            {submitError}
+                        </p>
+                    )}
 
                     <div className="form-actions">
                         <button
                             type="submit"
                             className="save-button"
+                            disabled={saving}
                         >
-                            Save Transaction
+                            {saving
+                                ? "Saving..."
+                                : "Save Transaction"}
                         </button>
 
                         <button
