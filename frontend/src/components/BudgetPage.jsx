@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import "./BudgetPage.css";
+import { PageHeaderIcon } from "./NavIcon";
+import {
+    formatMoney,
+    getRateNote,
+} from "../utils/currency";
 
 function getCurrentMonth() {
     const now = new Date();
@@ -9,36 +14,57 @@ function getCurrentMonth() {
     return `${year}-${month}`;
 }
 
-function getCurrentMonthLabel() {
-    return new Date().toLocaleDateString("en-CA", {
-        month: "long",
-        year: "numeric",
-    });
+// "2026-11" + 1 -> "2026-12"
+function addMonths(month, count) {
+    const [year, monthNumber] = month.split("-").map(Number);
+    const date = new Date(year, monthNumber - 1 + count, 1);
+
+    return `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+    ).padStart(2, "0")}`;
 }
 
-function formatMoney(amount) {
-    return Number(amount || 0).toLocaleString("en-CA", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+// "2026-11" -> "November 2026"
+function getMonthLabel(month) {
+    const [year, monthNumber] = month.split("-").map(Number);
+
+    return new Date(year, monthNumber - 1, 1).toLocaleDateString(
+        "en-CA",
+        {
+            month: "long",
+            year: "numeric",
+        }
+    );
 }
 
-function BudgetPage({ userId }) {
-    const [budgets, setBudgets] = useState([]);
-    const [transactions, setTransactions] = useState([]);
+const STATUS_LABELS = {
+    past: "Past month",
+    current: "This month",
+    future: "Upcoming month",
+};
+
+function BudgetPage({ userId, currency = "CAD" }) {
+    // The month being viewed ("YYYY-MM"). Users can move to
+    // past months to review them or future months to plan ahead.
+    const [selectedMonth, setSelectedMonth] =
+        useState(getCurrentMonth);
+
+    const [summary, setSummary] = useState(null);
+    const [rateNote, setRateNote] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const [showBudgetForm, setShowBudgetForm] =
         useState(false);
     const [budgetInput, setBudgetInput] = useState("");
+    const [formError, setFormError] = useState("");
     const [savingBudget, setSavingBudget] =
         useState(false);
     const [refreshBudget, setRefreshBudget] =
         useState(0);
 
     const currentMonth = getCurrentMonth();
-    const currentMonthLabel = getCurrentMonthLabel();
+    const monthLabel = getMonthLabel(selectedMonth);
 
     useEffect(() => {
         async function loadBudgetData() {
@@ -52,119 +78,77 @@ function BudgetPage({ userId }) {
                 setLoading(true);
                 setError("");
 
-                const [
-                    budgetResponse,
-                    transactionResponse,
-                ] = await Promise.all([
-                    fetch(`/api/budgets/${userId}`),
-                    fetch(`/api/transactions/${userId}`),
-                ]);
+                const response = await fetch(
+                    `/api/budgets/${userId}/month/${selectedMonth}`
+                );
 
-                const budgetData =
-                    await budgetResponse.json();
+                const data = await response.json();
 
-                const transactionData =
-                    await transactionResponse.json();
-
-                if (!budgetResponse.ok) {
+                if (!response.ok) {
                     throw new Error(
-                        budgetData.message ||
+                        data.message ||
                         "Could not load budget."
                     );
                 }
 
-                if (!transactionResponse.ok) {
-                    throw new Error(
-                        transactionData.message ||
-                        "Could not load transactions."
-                    );
-                }
-
-                setBudgets(budgetData.budgets || []);
-
-                setTransactions(
-                    transactionData.transactions || []
+                setSummary(data.summary);
+                setRateNote(
+                    getRateNote(data.rateSource, data.rateDate)
                 );
-            } catch (error) {
-                console.error("Budget error:", error);
-                setError(error.message);
+            } catch (loadError) {
+                console.error("Budget error:", loadError);
+                setSummary(null);
+                setError(loadError.message);
             } finally {
                 setLoading(false);
             }
         }
 
         loadBudgetData();
-    }, [userId, refreshBudget]);
+    }, [userId, selectedMonth, refreshBudget, currency]);
 
-    const currentBudget = budgets.find(
-        (budget) =>
-            String(budget.month).slice(0, 7) ===
-            currentMonth
-    );
-
-    const monthlyBudget = Number(
-        currentBudget?.budget_amount || 0
-    );
-
-    const monthlyExpenses = transactions.filter(
-        (transaction) => {
-            const transactionType = (
-                transaction.transaction_type || ""
-            ).toLowerCase();
-
-            const transactionDate =
-                transaction.transaction_date || "";
-
-            return (
-                transactionType === "expense" &&
-                transactionDate.startsWith(currentMonth)
-            );
-        }
-    );
-
-    const totalSpent = monthlyExpenses.reduce(
-        (total, transaction) =>
-            total + Number(transaction.amount || 0),
-        0
-    );
-
+    const hasBudget = Boolean(summary?.hasBudget);
+    const monthlyBudget = Number(summary?.budgetAmount || 0);
+    const totalSpent = Number(summary?.totalSpent || 0);
     const remaining = monthlyBudget - totalSpent;
+    const overBudget = hasBudget && totalSpent > monthlyBudget;
+
+    // Budget was set in another currency (before the user changed
+    // their preferred currency). Show what was originally entered.
+    const budgetSetInOtherCurrency =
+        hasBudget &&
+        summary.budgetCurrency &&
+        summary.budgetCurrency !== currency;
+    const status = summary?.status ||
+        (selectedMonth < currentMonth
+            ? "past"
+            : selectedMonth > currentMonth
+                ? "future"
+                : "current");
 
     const spentPercentage =
         monthlyBudget > 0
             ? Math.min(
-                Math.round(
-                    (totalSpent / monthlyBudget) * 100
-                ),
+                Math.round((totalSpent / monthlyBudget) * 100),
                 100
             )
             : 0;
 
-    const spendingByCategory = monthlyExpenses.reduce(
-        (categories, transaction) => {
-            const category =
-                transaction.category_name || "Other";
+    const spendingByCategory =
+        summary?.spendingByCategory || [];
 
-            if (!categories[category]) {
-                categories[category] = 0;
-            }
-
-            categories[category] += Number(
-                transaction.amount || 0
-            );
-
-            return categories;
-        },
-        {}
-    );
+    function changeMonth(month) {
+        if (/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+            setShowBudgetForm(false);
+            setSelectedMonth(month);
+        }
+    }
 
     function openBudgetForm() {
         setBudgetInput(
-            currentBudget
-                ? String(currentBudget.budget_amount)
-                : ""
+            hasBudget ? String(monthlyBudget) : ""
         );
-
+        setFormError("");
         setShowBudgetForm(true);
     }
 
@@ -172,17 +156,18 @@ function BudgetPage({ userId }) {
         event.preventDefault();
 
         if (!userId) {
-            alert("Please log in again.");
+            setFormError("Please log in again.");
             return;
         }
 
         const budgetAmount = Number(budgetInput);
 
         if (
+            budgetInput === "" ||
             Number.isNaN(budgetAmount) ||
             budgetAmount < 0
         ) {
-            alert(
+            setFormError(
                 "Please enter a valid budget amount."
             );
             return;
@@ -190,39 +175,27 @@ function BudgetPage({ userId }) {
 
         try {
             setSavingBudget(true);
+            setFormError("");
 
-            let response;
+            const isUpdate = hasBudget && summary.budgetId;
 
-            if (currentBudget) {
-                response = await fetch(
-                    `/api/budgets/${currentBudget.budget_id}`,
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type":
-                                "application/json",
-                        },
-                        body: JSON.stringify({
-                            userId,
-                            month: currentMonth,
-                            budgetAmount,
-                        }),
-                    }
-                );
-            } else {
-                response = await fetch("/api/budgets", {
-                    method: "POST",
+            const response = await fetch(
+                isUpdate
+                    ? `/api/budgets/${summary.budgetId}`
+                    : "/api/budgets",
+                {
+                    method: isUpdate ? "PUT" : "POST",
                     headers: {
-                        "Content-Type":
-                            "application/json",
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                         userId,
-                        month: currentMonth,
+                        month: selectedMonth,
                         budgetAmount,
+                        currency,
                     }),
-                });
-            }
+                }
+            );
 
             const data = await response.json();
 
@@ -234,30 +207,13 @@ function BudgetPage({ userId }) {
             }
 
             setShowBudgetForm(false);
-
-            setRefreshBudget(
-                (currentValue) => currentValue + 1
-            );
-        } catch (error) {
-            console.error(
-                "Save budget error:",
-                error
-            );
-
-            alert(error.message);
+            setRefreshBudget((value) => value + 1);
+        } catch (saveError) {
+            console.error("Save budget error:", saveError);
+            setFormError(saveError.message);
         } finally {
             setSavingBudget(false);
         }
-    }
-
-    if (loading) {
-        return (
-            <main className="budget-page">
-                <section className="budget-content">
-                    <p>Loading budget...</p>
-                </section>
-            </main>
-        );
     }
 
     return (
@@ -271,90 +227,269 @@ function BudgetPage({ userId }) {
                     <h1>Monthly Budget</h1>
 
                     <p>
-                        Track your spending and stay
-                        within your budget.
+                        Review past months and plan
+                        budgets for upcoming ones.
                     </p>
                 </div>
 
-                <div className="budget-avatar">$</div>
+                <PageHeaderIcon name="budget" />
             </header>
 
             <section className="budget-content">
+                <nav
+                    className="month-navigator"
+                    aria-label="Choose a month"
+                >
+                    <button
+                        type="button"
+                        className="month-nav-button"
+                        onClick={() =>
+                            changeMonth(addMonths(selectedMonth, -1))
+                        }
+                        aria-label="Previous month"
+                    >
+                        ‹
+                    </button>
+
+                    <div className="month-navigator-center">
+                        <label
+                            className="month-navigator-label"
+                            htmlFor="budgetMonth"
+                        >
+                            {monthLabel}
+                        </label>
+
+                        <input
+                            id="budgetMonth"
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(event) =>
+                                changeMonth(event.target.value)
+                            }
+                        />
+                    </div>
+
+                    <button
+                        type="button"
+                        className="month-nav-button"
+                        onClick={() =>
+                            changeMonth(addMonths(selectedMonth, 1))
+                        }
+                        aria-label="Next month"
+                    >
+                        ›
+                    </button>
+                </nav>
+
+                {selectedMonth !== currentMonth && (
+                    <button
+                        type="button"
+                        className="month-today-button"
+                        onClick={() => changeMonth(currentMonth)}
+                    >
+                        Back to this month
+                    </button>
+                )}
+
                 {error && (
                     <p className="budget-error">
                         {error}
                     </p>
                 )}
 
-                <div className="overall-budget-card">
-                    <p className="budget-month">
-                        {currentMonthLabel} - Overall
-                        Budget
-                    </p>
+                {loading ? (
+                    <p>Loading budget...</p>
+                ) : (
+                    <>
+                        <div className="overall-budget-card">
+                            <div className="budget-card-top">
+                                <p className="budget-month">
+                                    {monthLabel} - Overall Budget
+                                </p>
 
-                    <h2>
-                        ${formatMoney(monthlyBudget)}
-                    </h2>
+                                <span
+                                    className={`month-status month-status-${status}`}
+                                >
+                                    {STATUS_LABELS[status]}
+                                </span>
+                            </div>
 
-                    <div className="progress-bar">
-                        <div
-                            className="progress-fill"
-                            style={{
-                                width: `${spentPercentage}%`,
-                            }}
-                        />
-                    </div>
+                            {hasBudget ? (
+                                <>
+                                    <h2>
+                                        {formatMoney(monthlyBudget, currency)}
+                                    </h2>
 
-                    <div className="budget-summary">
-                        <span>
-                            Spent: $
-                            {formatMoney(totalSpent)}
-                        </span>
+                                    {budgetSetInOtherCurrency && (
+                                        <p className="budget-original-currency">
+                                            Set as{" "}
+                                            {formatMoney(
+                                                summary.originalBudgetAmount,
+                                                summary.budgetCurrency
+                                            )}{" "}
+                                            ({summary.budgetCurrency}),
+                                            converted to {currency}.
+                                        </p>
+                                    )}
 
-                        <span>
-                            {spentPercentage}%
-                        </span>
+                                    <div className="progress-bar">
+                                        <div
+                                            className={
+                                                overBudget
+                                                    ? "progress-fill progress-fill-over"
+                                                    : "progress-fill"
+                                            }
+                                            style={{
+                                                width: `${spentPercentage}%`,
+                                            }}
+                                        />
+                                    </div>
 
-                        <span>
-                            Left: $
-                            {formatMoney(remaining)}
-                        </span>
-                    </div>
+                                    <div className="budget-summary">
+                                        <span>
+                                            Spent:{" "}
+                                            {formatMoney(totalSpent, currency)}
+                                        </span>
 
-                    <button
-                        type="button"
-                        className="edit-budget-button"
-                        onClick={openBudgetForm}
-                    >
-                        {currentBudget
-                            ? "Edit Budget"
-                            : "Set Budget"}
-                    </button>
-                </div>
+                                        <span>
+                                            {summary.percentUsed ?? spentPercentage}%
+                                        </span>
+
+                                        <span
+                                            className={
+                                                overBudget
+                                                    ? "budget-over-text"
+                                                    : ""
+                                            }
+                                        >
+                                            {overBudget
+                                                ? `Over by: ${formatMoney(
+                                                    Math.abs(remaining),
+                                                    currency
+                                                )}`
+                                                : `Left: ${formatMoney(
+                                                    remaining,
+                                                    currency
+                                                )}`}
+                                        </span>
+                                    </div>
+
+                                    {status === "past" && (
+                                        <p className="budget-month-note">
+                                            {overBudget
+                                                ? "You went over budget this month."
+                                                : "You stayed within budget this month."}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="no-budget">
+                                    <h2>No budget set</h2>
+
+                                    <p>
+                                        {status === "future"
+                                            ? "Plan ahead by setting a budget for this month."
+                                            : status === "past"
+                                                ? `No budget was set for this month. You spent ${formatMoney(totalSpent, currency)}.`
+                                                : "Set a budget to start tracking your spending."}
+                                    </p>
+                                </div>
+                            )}
+
+                            <button
+                                type="button"
+                                className="edit-budget-button"
+                                onClick={openBudgetForm}
+                            >
+                                {hasBudget
+                                    ? "Edit Budget"
+                                    : "Set Budget"}
+                            </button>
+                        </div>
+
+                        <div className="category-budgets">
+                            <h2>Spending by Category</h2>
+
+                            {spendingByCategory.length === 0 ? (
+                                <p>
+                                    {status === "future"
+                                        ? "No expenses recorded for this month yet."
+                                        : "No expenses recorded for this month."}
+                                </p>
+                            ) : (
+                                spendingByCategory.map(
+                                    ({ categoryName, amount }) => {
+                                        const percentage =
+                                            monthlyBudget > 0
+                                                ? Math.min(
+                                                    (amount / monthlyBudget) * 100,
+                                                    100
+                                                )
+                                                : totalSpent > 0
+                                                    ? (amount / totalSpent) * 100
+                                                    : 0;
+
+                                        return (
+                                            <article
+                                                className="category-budget"
+                                                key={categoryName}
+                                            >
+                                                <div className="category-budget-header">
+                                                    <h3>{categoryName}</h3>
+
+                                                    <span>
+                                                        {formatMoney(amount, currency)}{" "}
+                                                        spent
+                                                    </span>
+                                                </div>
+
+                                                <div className="progress-bar category-progress">
+                                                    <div
+                                                        className="progress-fill"
+                                                        style={{
+                                                            width: `${percentage}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </article>
+                                        );
+                                    }
+                                )
+                            )}
+                        </div>
+
+                        {rateNote && (
+                            <p className="budget-rate-note">
+                                Amounts are shown in {currency}.{" "}
+                                {rateNote}
+                            </p>
+                        )}
+                    </>
+                )}
 
                 {showBudgetForm && (
                     <div className="budget-form-overlay">
                         <form
                             className="budget-form-card"
-                            onSubmit={
-                                handleBudgetSave
-                            }
+                            onSubmit={handleBudgetSave}
+                            noValidate
                         >
                             <h2>
-                                {currentBudget
+                                {hasBudget
                                     ? "Edit Monthly Budget"
                                     : "Set Monthly Budget"}
                             </h2>
 
                             <p>
-                                Enter your overall
-                                budget for{" "}
-                                {currentMonthLabel}.
+                                Enter your overall budget for{" "}
+                                {monthLabel} in {currency}.
+                                {budgetSetInOtherCurrency &&
+                                    ` It was set in ${summary.budgetCurrency}; saving will store it in ${currency}.`}
                             </p>
 
                             <div className="budget-form-group">
                                 <label htmlFor="budgetAmount">
-                                    Budget Amount ($)
+                                    Budget Amount ({currency})
                                 </label>
 
                                 <input
@@ -363,20 +498,24 @@ function BudgetPage({ userId }) {
                                     min="0"
                                     step="0.01"
                                     placeholder="0.00"
-                                    value={
-                                        budgetInput
-                                    }
-                                    onChange={(
-                                        event
-                                    ) =>
-                                        setBudgetInput(
-                                            event.target
-                                                .value
-                                        )
-                                    }
+                                    value={budgetInput}
+                                    onChange={(event) => {
+                                        setBudgetInput(event.target.value);
+                                        setFormError("");
+                                    }}
+                                    aria-invalid={Boolean(formError)}
                                     autoFocus
                                     required
                                 />
+
+                                {formError && (
+                                    <p
+                                        className="field-error"
+                                        role="alert"
+                                    >
+                                        {formError}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="budget-form-actions">
@@ -384,13 +523,9 @@ function BudgetPage({ userId }) {
                                     type="button"
                                     className="budget-cancel-button"
                                     onClick={() =>
-                                        setShowBudgetForm(
-                                            false
-                                        )
+                                        setShowBudgetForm(false)
                                     }
-                                    disabled={
-                                        savingBudget
-                                    }
+                                    disabled={savingBudget}
                                 >
                                     Cancel
                                 </button>
@@ -398,9 +533,7 @@ function BudgetPage({ userId }) {
                                 <button
                                     type="submit"
                                     className="budget-save-button"
-                                    disabled={
-                                        savingBudget
-                                    }
+                                    disabled={savingBudget}
                                 >
                                     {savingBudget
                                         ? "Saving..."
@@ -410,67 +543,6 @@ function BudgetPage({ userId }) {
                         </form>
                     </div>
                 )}
-
-                <div className="category-budgets">
-                    <h2>Spending by Category</h2>
-
-                    {Object.keys(
-                        spendingByCategory
-                    ).length === 0 ? (
-                        <p>
-                            No expenses recorded for
-                            this month yet.
-                        </p>
-                    ) : (
-                        Object.entries(
-                            spendingByCategory
-                        ).map(
-                            ([category, spent]) => {
-                                const percentage =
-                                    monthlyBudget > 0
-                                        ? Math.min(
-                                            (spent /
-                                                monthlyBudget) *
-                                            100,
-                                            100
-                                        )
-                                        : 0;
-
-                                return (
-                                    <article
-                                        className="category-budget"
-                                        key={category}
-                                    >
-                                        <div className="category-budget-header">
-                                            <h3>
-                                                {
-                                                    category
-                                                }
-                                            </h3>
-
-                                            <span>
-                                                $
-                                                {formatMoney(
-                                                    spent
-                                                )}{" "}
-                                                spent
-                                            </span>
-                                        </div>
-
-                                        <div className="progress-bar category-progress">
-                                            <div
-                                                className="progress-fill"
-                                                style={{
-                                                    width: `${percentage}%`,
-                                                }}
-                                            />
-                                        </div>
-                                    </article>
-                                );
-                            }
-                        )
-                    )}
-                </div>
             </section>
         </main>
     );

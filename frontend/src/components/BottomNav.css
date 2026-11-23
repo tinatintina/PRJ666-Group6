@@ -1,0 +1,53 @@
+/* Bottom navigation icons.
+   Layout of the bar itself is in TransactionsPage.css. */
+
+.bottom-navigation .nav-icon-wrap {
+    display: grid;
+    width: 44px;
+    height: 30px;
+    place-items: center;
+    border-radius: 999px;
+    transition:
+        background 0.2s,
+        color 0.2s;
+}
+
+.bottom-navigation .nav-icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+}
+
+.bottom-navigation button:hover .nav-icon-wrap {
+    background: #f1f5f9;
+}
+
+.bottom-navigation .active-navigation .nav-icon-wrap,
+.bottom-navigation .active-navigation:hover .nav-icon-wrap {
+    background: #dcfce7;
+    color: var(--color-accent-hover);
+}
+
+.bottom-navigation .active-navigation {
+    font-weight: 700;
+}
+
+.bottom-navigation button:focus-visible {
+    outline: none;
+}
+
+.bottom-navigation button:focus-visible .nav-icon-wrap {
+    box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+@media (max-width: 600px) {
+    .bottom-navigation .nav-icon-wrap {
+        width: 40px;
+        height: 28px;
+    }
+
+    .bottom-navigation .nav-icon {
+        width: 20px;
+        height: 20px;
+    }
+}

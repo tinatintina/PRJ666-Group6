@@ -6,9 +6,14 @@ import {
     MAX_AMOUNT,
     validateTransaction,
 } from "../utils/validation";
+import {
+    CURRENCIES,
+    formatMoney,
+} from "../utils/currency";
 
 function AddTransactionPage({
     userId,
+    currency = "CAD",
     onSave,
     onCancel,
 }) {
@@ -17,6 +22,19 @@ function AddTransactionPage({
 
     const [amount, setAmount] =
         useState("");
+
+    // Currency the amount was paid / received in.
+    // Defaults to the user's preferred currency.
+    const [
+        entryCurrency,
+        setEntryCurrency,
+    ] = useState(currency);
+
+    // Live "≈ amount in preferred currency" preview
+    const [
+        conversion,
+        setConversion,
+    ] = useState(null);
 
     const [categoryId, setCategoryId] =
         useState("");
@@ -126,6 +144,70 @@ function AddTransactionPage({
         loadCategories();
     }, [userId]);
 
+    const conversionKey =
+        `${amount}|${entryCurrency}|${currency}`;
+
+    // When a different currency is chosen, show what the
+    // amount is worth in the user's preferred currency.
+    useEffect(() => {
+        const numericAmount = Number(amount);
+
+        if (
+            entryCurrency === currency ||
+            !Number.isFinite(numericAmount) ||
+            numericAmount <= 0
+        ) {
+            return;
+        }
+
+        const requestKey = conversionKey;
+
+        let cancelled = false;
+
+        // Wait until the user stops typing
+        const timer = setTimeout(async () => {
+            try {
+                const response = await fetch(
+                    `/api/currency/convert?amount=${numericAmount}&from=${entryCurrency}&to=${currency}`
+                );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message);
+                }
+
+                if (!cancelled) {
+                    setConversion({
+                        ...data,
+                        key: requestKey,
+                    });
+                }
+            } catch (error) {
+                console.error(
+                    "Conversion error:",
+                    error
+                );
+
+                if (!cancelled) {
+                    setConversion(null);
+                }
+            }
+        }, 300);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [amount, entryCurrency, currency, conversionKey]);
+
+    // Only show a preview that matches what is typed now
+    const currentConversion =
+        conversion?.key === conversionKey
+            ? conversion
+            : null;
+
     // Only show categories that match
     // the selected transaction type
     const availableCategories =
@@ -188,6 +270,8 @@ function AddTransactionPage({
             await onSave({
             type,
             amount: Number(amount),
+
+            currency: entryCurrency,
 
             categoryId:
                 categoryId === "other"
@@ -314,9 +398,10 @@ function AddTransactionPage({
 
                     <div className="form-group">
                         <label htmlFor="amount">
-                            Amount ($)
+                            Amount
                         </label>
 
+                        <div className="amount-row">
                         <input
                             id="amount"
                             type="number"
@@ -339,7 +424,53 @@ function AddTransactionPage({
                             {...errorProps("amount")}
                         />
 
+                        <select
+                            id="currency"
+                            className="currency-select"
+                            aria-label="Currency"
+                            value={entryCurrency}
+                            onChange={(event) =>
+                                setEntryCurrency(
+                                    event.target.value
+                                )
+                            }
+                        >
+                            {CURRENCIES.map(
+                                (code) => (
+                                    <option
+                                        key={code}
+                                        value={code}
+                                    >
+                                        {code}
+                                    </option>
+                                )
+                            )}
+                        </select>
+                        </div>
+
                         {renderError("amount")}
+
+                        {currentConversion && (
+                            <p
+                                className="conversion-preview"
+                                aria-live="polite"
+                            >
+                                ≈{" "}
+                                {formatMoney(
+                                    currentConversion.convertedAmount,
+                                    currentConversion.to
+                                )}{" "}
+                                {currentConversion.to}
+                                <span>
+                                    1 {currentConversion.from} ={" "}
+                                    {currentConversion.rate}{" "}
+                                    {currentConversion.to}
+                                    {currentConversion.rateSource ===
+                                        "fallback" &&
+                                        " (approximate)"}
+                                </span>
+                            </p>
+                        )}
                     </div>
 
                     <div className="form-group">
@@ -526,4 +657,4 @@ function AddTransactionPage({
     );
 }
 
-export default AddTransactionPage;
+export default AddTransactionPage;

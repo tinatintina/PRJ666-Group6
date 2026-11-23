@@ -4,6 +4,11 @@ import {
 } from "react";
 
 import "./DashboardPage.css";
+import { PageHeaderIcon } from "./NavIcon";
+import {
+    formatMoney,
+    getDisplayAmount,
+} from "../utils/currency";
 
 function getCurrentMonth() {
     const now = new Date();
@@ -23,18 +28,6 @@ function getCurrentMonthLabel() {
         {
             month: "long",
             year: "numeric",
-        }
-    );
-}
-
-function formatMoney(amount) {
-    return Number(
-        amount || 0
-    ).toLocaleString(
-        "en-CA",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
         }
     );
 }
@@ -67,6 +60,7 @@ function formatDate(dateValue) {
 
 function DashboardPage({
     userId,
+    currency = "CAD",
     firstName,
     onNavigate,
 }) {
@@ -110,7 +104,7 @@ function DashboardPage({
                     budgetResponse,
                 ] = await Promise.all([
                     fetch(
-                        `/api/transactions/${userId}`
+                        `/api/transactions/${userId}?currency=${currency}`
                     ),
 
                     fetch(
@@ -162,7 +156,7 @@ function DashboardPage({
         }
 
         loadDashboard();
-    }, [userId]);
+    }, [userId, currency]);
 
     const currentBudget =
         budgets.find(
@@ -201,9 +195,8 @@ function DashboardPage({
             .reduce(
                 (total, transaction) =>
                     total +
-                    Number(
-                        transaction.amount ||
-                        0
+                    getDisplayAmount(
+                        transaction
                     ),
                 0
             );
@@ -221,9 +214,8 @@ function DashboardPage({
             .reduce(
                 (total, transaction) =>
                     total +
-                    Number(
-                        transaction.amount ||
-                        0
+                    getDisplayAmount(
+                        transaction
                     ),
                 0
             );
@@ -281,9 +273,7 @@ function DashboardPage({
                     </p>
                 </div>
 
-                <div className="dashboard-avatar">
-                    $
-                </div>
+                <PageHeaderIcon name="home" />
             </header>
 
             <section className="dashboard-content">
@@ -297,14 +287,14 @@ function DashboardPage({
                     <article className="summary-card">
                         <p>Total Income</p>
                         <h2 className="income-value">
-                            +${formatMoney(totalIncome)}
+                            +{formatMoney(totalIncome, currency)}
                         </h2>
                     </article>
 
                     <article className="summary-card">
                         <p>Total Expenses</p>
                         <h2 className="expense-value">
-                            -${formatMoney(totalExpenses)}
+                            -{formatMoney(totalExpenses, currency)}
                         </h2>
                     </article>
 
@@ -312,7 +302,7 @@ function DashboardPage({
                         <p>Remaining Budget</p>
 
                         <h2>
-                            ${formatMoney(remainingBudget)}
+                            {formatMoney(remainingBudget, currency)}
                         </h2>
                     </article>
 
@@ -438,9 +428,11 @@ function DashboardPage({
                                                     "income"
                                                     ? "+"
                                                     : "-"}
-                                                $
                                                 {formatMoney(
-                                                    transaction.amount
+                                                    getDisplayAmount(
+                                                        transaction
+                                                    ),
+                                                    currency
                                                 )}
                                             </strong>
                                         </article>
@@ -455,4 +447,4 @@ function DashboardPage({
     );
 }
 
-export default DashboardPage;
+export default DashboardPage;

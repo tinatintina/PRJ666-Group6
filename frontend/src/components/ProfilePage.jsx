@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import "./ProfilePage.css";
+import { PageHeaderIcon } from "./NavIcon";
+import CurrencyConverter from "./CurrencyConverter";
 
 const currencies = [
     "CAD",
@@ -195,9 +197,7 @@ function ProfilePage({
                     </p>
                 </div>
 
-                <div className="profile-avatar">
-                    {initials}
-                </div>
+                <PageHeaderIcon name="profile" />
             </header>
 
             <section className="profile-content">
@@ -355,6 +355,12 @@ function ProfilePage({
                     )}
                 </form>
 
+                <CurrencyConverter
+                    defaultCurrency={
+                        profile?.preferredCurrency || "CAD"
+                    }
+                />
+
                 <button
                     type="button"
                     className="profile-logout-button"
@@ -367,4 +373,4 @@ function ProfilePage({
     );
 }
 
-export default ProfilePage;
+export default ProfilePage;

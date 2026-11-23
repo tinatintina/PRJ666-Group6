@@ -299,6 +299,10 @@ function App() {
     }
   }
 
+  // All amounts are shown in the user's preferred currency.
+  const userCurrency =
+    currentUser?.preferredCurrency || "CAD";
+
   function handleLogout() {
     setCurrentUser(null);
     setCurrentPage("authentication");
@@ -350,6 +354,7 @@ function App() {
               transaction.amount,
 
             currency:
+              transaction.currency ||
               currentUser.preferredCurrency ||
               "CAD",
 
@@ -392,6 +397,7 @@ function App() {
         userId={
           currentUser?.userId
         }
+        currency={userCurrency}
         onSave={
           handleSaveTransaction
         }
@@ -413,6 +419,7 @@ function App() {
           userId={
             currentUser?.userId
           }
+          currency={userCurrency}
           firstName={
             currentUser?.firstName
           }
@@ -443,6 +450,7 @@ function App() {
           userId={
             currentUser?.userId
           }
+          currency={userCurrency}
           onAddTransaction={() =>
             setCurrentPage(
               "add-transaction"
@@ -471,6 +479,7 @@ function App() {
           userId={
             currentUser?.userId
           }
+          currency={userCurrency}
         />
 
         <BottomNav
@@ -490,6 +499,7 @@ function App() {
       <>
         <ReportsPage
           userId={currentUser?.userId}
+          currency={userCurrency}
         />
 
         <BottomNav
@@ -772,4 +782,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;

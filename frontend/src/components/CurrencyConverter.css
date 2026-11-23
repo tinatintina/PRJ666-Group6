@@ -1,0 +1,79 @@
+/* Currency converter card (Profile page) */
+
+.currency-converter {
+    margin-top: 22px;
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.currency-converter h2 {
+    margin: 0 0 5px;
+    font-size: 20px;
+}
+
+.currency-converter-intro {
+    margin: 0 0 18px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.currency-converter-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr auto 1fr;
+    align-items: end;
+    gap: 12px;
+}
+
+.currency-converter-row .form-group {
+    margin: 0;
+}
+
+.currency-swap-button {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 2px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: white;
+    color: var(--color-primary);
+    font-size: 18px;
+}
+
+.currency-swap-button:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+}
+
+.currency-converter-result {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: var(--border-radius-small);
+    background: #f0fdf4;
+}
+
+.currency-converter-result strong {
+    color: var(--color-primary);
+    font-size: 20px;
+}
+
+.currency-converter-result span {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .currency-converter-row {
+        grid-template-columns: 1fr auto 1fr;
+    }
+
+    .currency-converter-row .form-group:first-child {
+        grid-column: 1 / -1;
+    }
+}

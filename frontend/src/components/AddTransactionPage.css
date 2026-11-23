@@ -193,3 +193,36 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* Amount + currency */
+
+.amount-row {
+    display: flex;
+    gap: 8px;
+}
+
+.amount-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.amount-row .currency-select {
+    width: 96px;
+    flex-shrink: 0;
+}
+
+.conversion-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 6px 0 0;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.conversion-preview span {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 400;
+}

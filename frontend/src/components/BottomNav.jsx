@@ -1,32 +1,30 @@
+import "./BottomNav.css";
+import NavIcon from "./NavIcon";
+
 function BottomNav({ currentPage, onNavigate }) {
     const items = [
         {
             page: "home",
-            icon: "\u2302",
             label: "Home",
             available: true,
         },
         {
             page: "transactions",
-            icon: "\u2195",
             label: "Transactions",
             available: true,
         },
         {
             page: "budget",
-            icon: "\u25A3",
             label: "Budget",
             available: true,
         },
         {
             page: "reports",
-            icon: "\u25A5",
             label: "Reports",
             available: true,
         },
         {
             page: "profile",
-            icon: "\u25CF",
             label: "Profile",
             available: true,
         },
@@ -53,7 +51,7 @@ function BottomNav({ currentPage, onNavigate }) {
                     title={
                         item.available
                             ? item.label
-                            : "Reports coming soon"
+                            : `${item.label} coming soon`
                     }
                     aria-current={
                         currentPage === item.page
@@ -61,8 +59,11 @@ function BottomNav({ currentPage, onNavigate }) {
                             : undefined
                     }
                 >
-                    <span aria-hidden="true">
-                        {item.icon}
+                    <span
+                        className="nav-icon-wrap"
+                        aria-hidden="true"
+                    >
+                        <NavIcon name={item.page} />
                     </span>
 
                     {item.label}

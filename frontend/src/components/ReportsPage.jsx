@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
 import "./ReportsPage.css";
+import { PageHeaderIcon } from "./NavIcon";
+import BudgetHistory from "./BudgetHistory";
+import {
+    formatMoney as formatCurrency,
+    getDisplayAmount,
+} from "../utils/currency";
 
 const months = [
     { value: "all", label: "All" },
@@ -27,7 +33,7 @@ const categoryColors = [
     "#64748b",
 ];
 
-function ReportsPage({ userId }) {
+function ReportsPage({ userId, currency = "CAD" }) {
     const [transactions, setTransactions] =
         useState([]);
     const [selectedMonth, setSelectedMonth] =
@@ -39,7 +45,7 @@ function ReportsPage({ userId }) {
         async function loadTransactions() {
             try {
                 const response = await fetch(
-                    `/api/transactions/${userId}`
+                    `/api/transactions/${userId}?currency=${currency}`
                 );
 
                 const data = await response.json();
@@ -68,7 +74,7 @@ function ReportsPage({ userId }) {
         if (userId) {
             loadTransactions();
         }
-    }, [userId]);
+    }, [userId, currency]);
 
     const selectedTransactions =
         selectedMonth === "all"
@@ -88,7 +94,7 @@ function ReportsPage({ userId }) {
         )
         .reduce(
             (total, transaction) =>
-                total + Number(transaction.amount),
+                total + getDisplayAmount(transaction),
             0
         );
 
@@ -100,7 +106,7 @@ function ReportsPage({ userId }) {
         )
         .reduce(
             (total, transaction) =>
-                total + Number(transaction.amount),
+                total + getDisplayAmount(transaction),
             0
         );
 
@@ -125,7 +131,7 @@ function ReportsPage({ userId }) {
 
             categoryTotals[category] =
                 (categoryTotals[category] || 0) +
-                Number(transaction.amount);
+                getDisplayAmount(transaction);
         });
 
     const categories = Object.entries(categoryTotals)
@@ -167,10 +173,7 @@ function ReportsPage({ userId }) {
             : "#e2e8f0";
 
     function formatMoney(amount) {
-        return new Intl.NumberFormat("en-CA", {
-            style: "currency",
-            currency: "CAD",
-        }).format(amount);
+        return formatCurrency(amount, currency);
     }
 
     if (loading) {
@@ -197,9 +200,7 @@ function ReportsPage({ userId }) {
                     </p>
                 </div>
 
-                <div className="reports-header-icon">
-                    {"\u25A5"}
-                </div>
+                <PageHeaderIcon name="reports" />
             </header>
 
             <section className="reports-content">
@@ -402,9 +403,14 @@ function ReportsPage({ userId }) {
                         )}
                     </article>
                 </section>
+
+                <BudgetHistory
+                    userId={userId}
+                    currency={currency}
+                />
             </section>
         </main>
     );
 }
 
-export default ReportsPage;
+export default ReportsPage;

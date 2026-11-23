@@ -1,0 +1,34 @@
+/* Icon on the right of each page header (Home, Transactions, Budget,
+   Reports, Profile). Uses the same drawings as the bottom navigation. */
+
+.page-header-icon {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 2px solid var(--color-accent);
+    border-radius: 16px;
+    background: #1e293b;
+    color: var(--color-accent);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+}
+
+.page-header-icon .nav-icon {
+    display: block;
+    width: 26px;
+    height: 26px;
+}
+
+@media (max-width: 600px) {
+    .page-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+    }
+
+    .page-header-icon .nav-icon {
+        width: 22px;
+        height: 22px;
+    }
+}

@@ -265,6 +265,160 @@
     height: 9px;
 }
 
+
+/* Month navigator (past / current / future months) */
+
+.month-navigator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.month-nav-button {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    place-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    background: white;
+    color: var(--color-primary);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.month-nav-button:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: white;
+}
+
+.month-navigator-center {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.month-navigator-label {
+    color: var(--color-primary);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.month-navigator-center input {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-small);
+    background: white;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 14px;
+}
+
+.month-today-button {
+    display: block;
+    margin: 0 auto 18px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-accent-hover);
+    font-weight: 700;
+}
+
+.month-today-button:hover {
+    text-decoration: underline;
+}
+
+.month-navigator + .budget-error,
+.month-navigator + p {
+    margin-top: 18px;
+}
+
+.budget-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.budget-card-top .budget-month {
+    margin: 0;
+}
+
+.month-status {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.month-status-past {
+    background: #f1f5f9;
+    color: var(--color-text-secondary);
+}
+
+.month-status-current {
+    background: #dcfce7;
+    color: var(--color-accent-hover);
+}
+
+.month-status-future {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.budget-page .progress-fill-over {
+    background: var(--color-expense);
+}
+
+.budget-original-currency {
+    margin: -14px 0 18px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.budget-over-text {
+    color: var(--color-expense);
+    font-weight: 700;
+}
+
+.budget-month-note {
+    margin: 14px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+.no-budget h2 {
+    margin: 0 0 8px;
+    color: var(--color-text-secondary);
+    font-size: 24px;
+}
+
+.no-budget p {
+    margin: 0;
+    color: var(--color-text-secondary);
+}
+
+.budget-rate-note {
+    margin: 16px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    text-align: center;
+}
+
 /* Mobile */
 
 @media (max-width: 600px) {
@@ -308,5 +462,11 @@
 
     .budget-form-actions button {
         width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .month-navigator-label {
+        font-size: 16px;
     }
 }

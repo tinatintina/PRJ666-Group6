@@ -1,9 +1,44 @@
 const pool = require("../config/db");
+const {
+    SUPPORTED_CURRENCIES,
+    normalizeCurrency,
+    isSupportedCurrency
+} = require("../config/currencies");
+const {
+    createConverter,
+    roundMoney
+} = require("../services/exchangeRates");
+
+// Reads ?currency=XXX. Returns { currency } or { error } for a bad value.
+const readDisplayCurrency = (query) => {
+    if (query.currency === undefined || query.currency === "") {
+        return { currency: null };
+    }
+
+    const currency = normalizeCurrency(query.currency);
+
+    if (!isSupportedCurrency(currency)) {
+        return {
+            error: `Currency must be one of: ${SUPPORTED_CURRENCIES.join(", ")}.`
+        };
+    }
+
+    return { currency };
+};
 
 
 // GET ALL TRANSACTIONS FOR A USER
+// Optional ?currency=CAD adds converted_amount to every transaction.
 const getTransactions = async (req, res) => {
     const { userId } = req.params;
+    const display = readDisplayCurrency(req.query);
+
+    if (display.error) {
+        return res.status(400).json({
+            success: false,
+            message: display.error
+        });
+    }
 
     try {
         const [transactions] = await pool.query(
@@ -25,9 +60,27 @@ const getTransactions = async (req, res) => {
             [userId]
         );
 
+        if (!display.currency) {
+            return res.status(200).json({
+                success: true,
+                transactions
+            });
+        }
+
+        const { convert, info } = await createConverter(display.currency);
+
         return res.status(200).json({
             success: true,
-            transactions
+            displayCurrency: info.currency,
+            rateDate: info.rateDate,
+            rateSource: info.rateSource,
+            transactions: transactions.map((transaction) => ({
+                ...transaction,
+                converted_amount: roundMoney(
+                    convert(transaction.amount, transaction.currency)
+                ),
+                display_currency: info.currency
+            }))
         });
 
     } catch (err) {
@@ -41,10 +94,20 @@ const getTransactions = async (req, res) => {
 };
 
 
-// GET INCOME / EXPENSE TOTALS (optional ?month=YYYY-MM)
+// GET INCOME / EXPENSE TOTALS (optional ?month=YYYY-MM and ?currency=CAD)
+// "totals" keeps each currency separate; "combined" converts everything into
+// one currency (?currency, or the user's preferred currency by default).
 const getTransactionTotals = async (req, res) => {
     const { userId } = req.params;
     const { month } = req.query;
+    const display = readDisplayCurrency(req.query);
+
+    if (display.error) {
+        return res.status(400).json({
+            success: false,
+            message: display.error
+        });
+    }
 
     if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
         return res.status(400).json({
@@ -79,10 +142,37 @@ const getTransactionTotals = async (req, res) => {
             balance: Number(r.total_income) - Number(r.total_expense)
         }));
 
+        let targetCurrency = display.currency;
+
+        if (!targetCurrency) {
+            const [users] = await pool.query(
+                "SELECT preferred_currency FROM users WHERE user_id = ?",
+                [userId]
+            );
+            targetCurrency = users[0]?.preferred_currency || "CAD";
+        }
+
+        const { convert, info } = await createConverter(targetCurrency);
+
+        const combinedIncome = totals.reduce(
+            (sum, t) => sum + convert(t.totalIncome, t.currency), 0
+        );
+        const combinedExpense = totals.reduce(
+            (sum, t) => sum + convert(t.totalExpense, t.currency), 0
+        );
+
         return res.status(200).json({
             success: true,
             month: month || "all",
-            totals
+            totals,
+            combined: {
+                currency: info.currency,
+                totalIncome: roundMoney(combinedIncome),
+                totalExpense: roundMoney(combinedExpense),
+                balance: roundMoney(combinedIncome - combinedExpense),
+                rateDate: info.rateDate,
+                rateSource: info.rateSource
+            }
         });
 
     } catch (err) {
@@ -169,6 +259,15 @@ const createTransaction = async (req, res) => {
             success: false,
             message:
                 "User, amount, currency, date, and transaction type are required."
+        });
+    }
+
+    const normalizedCurrency = normalizeCurrency(currency);
+
+    if (!isSupportedCurrency(normalizedCurrency)) {
+        return res.status(400).json({
+            success: false,
+            message: `Currency must be one of: ${SUPPORTED_CURRENCIES.join(", ")}.`
         });
     }
 
@@ -309,7 +408,7 @@ const createTransaction = async (req, res) => {
                 userId,
                 finalCategoryId,
                 numericAmount,
-                currency,
+                normalizedCurrency,
                 transactionDate,
                 normalizedType,
                 description?.trim() || null
@@ -364,6 +463,15 @@ const updateTransaction = async (req, res) => {
             success: false,
             message:
                 "User, category, amount, currency, date, and transaction type are required."
+        });
+    }
+
+    const normalizedCurrency = normalizeCurrency(currency);
+
+    if (!isSupportedCurrency(normalizedCurrency)) {
+        return res.status(400).json({
+            success: false,
+            message: `Currency must be one of: ${SUPPORTED_CURRENCIES.join(", ")}.`
         });
     }
 
@@ -424,7 +532,7 @@ const updateTransaction = async (req, res) => {
             [
                 categories[0].category_id,
                 numericAmount,
-                currency,
+                normalizedCurrency,
                 transactionDate,
                 normalizedType,
                 description?.trim() || null,
@@ -506,4 +614,4 @@ module.exports = {
     createTransaction,
     updateTransaction,
     deleteTransaction
-};
+};

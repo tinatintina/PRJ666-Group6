@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 
-const ALLOWED_CURRENCIES = ["CAD", "USD", "EUR", "GBP", "INR", "AUD", "JPY", "CNY"];
+const { SUPPORTED_CURRENCIES: ALLOWED_CURRENCIES } = require("../config/currencies");
 
 const isValidId = (value) =>
     Number.isInteger(Number(value)) && Number(value) > 0;
